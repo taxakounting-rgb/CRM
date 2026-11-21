@@ -26,6 +26,7 @@ catch { console.error('JS syntax error in bundle'); process.exit(1); }
 const safeJs = js.replace(/<\/script/gi, '<\\/script');
 const html = read('src/index.html').replace('/*__CSS__*/', () => css).replace('/*__JS__*/', () => safeJs);
 writeFileSync(join(root, 'dist/Universal_CRM.html'), html);
+writeFileSync(join(root, 'dist/index.html'), html); // Vercel / static hosting entry point
 console.log(`Built dist/Universal_CRM.html (${(html.length / 1024).toFixed(0)} KB)`);
 
 rmSync(join(root, 'dist', '.bundle-check.js'), { force: true });
