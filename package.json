@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "node scripts/build.mjs",
-    "test": "node scripts/build.mjs && node scripts/smoke.mjs && node scripts/e2e.mjs"
+    "test": "node scripts/build.mjs && node scripts/cloud-test.mjs && node scripts/smoke.mjs && node scripts/e2e.mjs"
   },
   "devDependencies": { "playwright": "^1.48.0" }
 }

@@ -15,3 +15,18 @@ Turn on "auto-save to a file" from the dashboard banner so your data is always b
 Data is stored in this browser on this computer. Use the same browser profile each time.
 
 Rebuild from source:  node scripts/build.mjs   (then node scripts/e2e.mjs to test)
+
+
+LOG IN / SIGN UP + CLOUD (use from any computer)
+------------------------------------------------
+The first screen is always Log in / Sign up.
+  * Sign up on a new system = create your company workspace (wizard). Your admin username + password become your cloud login.
+  * Log in on ANY computer = same username + password; your data is downloaded from the cloud.
+Cloud sync needs the hosted version (Vercel) with a database:
+  1. Vercel dashboard > your project > Storage > Create > Upstash Redis (Marketplace) > connect to the project.
+     (This adds KV_REST_API_URL and KV_REST_API_TOKEN automatically.)
+  2. Settings > Environment Variables > add CRM_SECRET = any long random text.
+  3. Redeploy. Open your Vercel address: the first screen will say "stored safely online".
+If the database is not connected (or you open the file directly), the app still works, storing data only in that browser.
+Not synced to the cloud: scanned document files (stay in the browser; use Settings > Backup > Export full backup).
+Test cloud API: node scripts/cloud-test.mjs

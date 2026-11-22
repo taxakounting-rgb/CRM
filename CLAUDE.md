@@ -25,3 +25,8 @@ A complete, dynamic CRM as ONE offline HTML file for any company (agency, accoun
 - Escape all user text before HTML (`html` tagged template escapes by default).
 - Permissions are data (editable matrix), not if-statements on role names.
 - Must work from `file://` in Chrome/Edge, offline, 1,000+ records.
+
+## Cloud sync (added)
+- `api/sync.js` Vercel function + Upstash Redis (env KV_REST_API_URL/TOKEN, CRM_SECRET). `src/js/22-cloud.js` is the client. First screen = `App.showGate()` (Log in / Sign up).
+- Password never sent; only PBKDF2 hash. State blob synced as a whole with version numbers (conflict = newer cloud copy wins, local snapshot kept). Document blobs (IDB) are NOT synced.
+- Test: `node scripts/cloud-test.mjs` (fake Redis, no network).
