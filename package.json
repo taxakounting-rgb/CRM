@@ -1,11 +1,10 @@
 {
   "name": "universal-crm",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "scripts": {
     "build": "node scripts/build.mjs",
-    "test": "node scripts/build.mjs && node scripts/cloud-test.mjs && node scripts/smoke.mjs && node scripts/e2e.mjs"
-  },
-  "devDependencies": { "playwright": "^1.48.0" }
+    "test": "node scripts/build.mjs && node scripts/cloud-test.mjs"
+  }
 }

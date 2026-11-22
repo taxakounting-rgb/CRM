@@ -66,12 +66,11 @@ const Setup = {
       <div class="auth-side"><div class="auth-card su-card"><h2>${this.steps[this.step][0]}</h2><p class="muted">Step ${this.step + 1} of ${this.steps.length}</p>
         <form id="su-form" novalidate autocomplete="off">${this.body()}
         <div class="su-actions">${this.step > 0 ? html`<button type="button" class="btn ghost" data-su-back>Back</button>` : html`<span></span>`}<button class="btn primary lg" type="submit">${last ? 'Create workspace' : 'Continue'}</button></div></form>
-        ${this.step === 0 ? html`<p class="sm center mt"><a href="#" data-su-restore>Already have a backup file? Restore it</a></p>` : ''}</div></div></div>`);
+        </div></div></div>`);
     App.bindAuthCommon();
     const f = $('#su-form');
     f.onsubmit = (e) => { e.preventDefault(); this.collect(); if (!this.valid()) return; if (last) this.finish(f); else { this.step++; this.render(); } };
     const back = $('[data-su-back]'); if (back) back.onclick = () => { this.collect(); this.step--; this.render(); };
-    const rs = $('[data-su-restore]'); if (rs) rs.onclick = (e) => { e.preventDefault(); DataFile.restoreFromFile(); };
     // live brand preview (step 1)
     if (this.step === 0) {
       f.elements.name.addEventListener('input', () => { this.W.name = f.elements.name.value; this.preview(); });
@@ -109,10 +108,11 @@ const Setup = {
     s.settings.setupDone = true; s.settings.setupAt = now;
     s.audit.unshift({ id: uid('a'), at: now, user: 'system', userId: '', action: 'create', module: 'settings', summary: `Setup completed for "${W.name.trim()}"; Super Admin "${admin.username}" created` });
     Store.saveNow();
+    await Cloud.push();
     Theme.save({ skin });
     setFavicon(); document.title = Brand.appName();
     Auth.start(admin); App.enter();
     toast(`Welcome to ${Brand.appName()}! Start by adding your first client.`, 'ok', { timeout: 6000 });
   }
 };
-App.showSetup = function () { Setup.step = 0; Setup.render(); };
+App.showSetup = function () { Setup.step = 0; if (!Setup.W.name) Setup.W.name = (Store.s.settings.company || {}).name || ''; Setup.render(); };

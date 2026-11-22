@@ -46,7 +46,7 @@ const Router = {
     else if (permMod !== 'any' && !(v.allow ? v.allow() : Auth.can(permMod))) out = emptyState('Access denied', 'Your role does not have permission to view this page. Ask the administrator to update your role permissions.');
     else { try { out = v.render(this.cur.params, this.cur.query); } catch (e) { console.warn(e); out = emptyState('Something went wrong', e.message); } }
     main.ondragover = main.ondrop = main.ondragleave = null;
-    main.innerHTML = String(License.banner()) + String(DataFile.banner()) + String(out);
+    main.innerHTML = String(License.banner()) + String(out);
     if (v && v.mount) { try { v.mount(main, this.cur.params, this.cur.query); } catch (e) { console.warn(e); } }
     Charts.hydrate(main);
     if (fid) { const el = document.getElementById(fid); if (el) { el.focus(); if (sel && el.setSelectionRange) try { el.setSelectionRange(sel[0], sel[1]); } catch (e) { /* ignore */ } } }
@@ -62,12 +62,13 @@ const App = {
     await Seed.ensure();
     await License.load();
     setFavicon();
-    await DataFile.init();
+    await Cloud.init();
     Theme.apply(); document.title = Brand.appName();
     Backup.autoSnapshot();
     window.addEventListener('hashchange', () => Router.go());
     Bus.on('change', () => { Auth._cache = null; Router.refresh(); });
     setInterval(async () => { const before = License.info.status; await License.load(); if (License.info.status !== before) { App.renderChrome(); Router.refresh(); } }, 3600000);
+    if (!Cloud.linked()) { this.showGate(); return; }
     if (needsSetup()) { this.showSetup(); return; }
     const r = Auth.resume();
     if (r && r.locked) { Auth.locked = true; this.showLock(); }
@@ -78,15 +79,74 @@ const App = {
   /* ---------- Auth screens ---------- */
   authFrame(inner) {
     const c = Store.s.settings.company || {};
-    return html`<div class="auth-wrap"><div class="auth-brand"><div class="auth-logo">${brandLogo()}</div><h1>${Brand.appName()}</h1><p>Clients, tasks, invoices, documents and reports, all in one workspace.</p><ul class="auth-feats"><li>${icon('check')} Clients, tasks &amp; deadlines</li><li>${icon('check')} Invoices, payments &amp; expenses</li><li>${icon('check')} Documents &amp; encrypted credential vault</li><li>${icon('check')} Works offline: your data stays on this computer</li></ul><p class="auth-foot">${[c.website, c.phone].filter(Boolean).join(' · ')}${c.address ? html`<br>${c.address}` : ''}</p></div>
+    return html`<div class="auth-wrap"><div class="auth-brand"><div class="auth-logo">${brandLogo()}</div><h1>${Brand.appName()}</h1><p>Clients, tasks, invoices, documents and reports, all in one workspace.</p><ul class="auth-feats"><li>${icon('check')} Clients, tasks &amp; deadlines</li><li>${icon('check')} Invoices, payments &amp; expenses</li><li>${icon('check')} Documents &amp; encrypted credential vault</li><li>${icon('check')} Sign in from any computer: your data is saved in the cloud</li></ul><p class="auth-foot">${[c.website, c.phone].filter(Boolean).join(' · ')}${c.address ? html`<br>${c.address}` : ''}</p></div>
       <div class="auth-side"><div class="auth-card">${inner}</div><button type="button" class="btn ghost sm theme-mini" data-theme-toggle>${icon(Theme.dark() ? 'sun' : 'moon')}<span>${Theme.dark() ? 'Light' : 'Dark'} mode</span></button></div></div>`;
+  },
+  /* First screen: company Sign up / Sign in */
+  showGate(msg = '') {
+    Auth.locked = false;
+    if (!Cloud.avail) { $('#app').innerHTML = String(this.authFrame(html`<h2>Server not connected</h2><div class="note">The cloud database is not connected yet. Open this app from your hosted web address (Vercel) after the owner has connected the database. See README for the 3 setup steps.</div>`)); this.bindAuthCommon(); return; }
+    $('#app').innerHTML = String(this.authFrame(html`<h2>Welcome</h2><p class="muted">Start your own CRM in minutes, or sign in to your company's CRM from anywhere.</p>
+      ${msg ? html`<div class="note ok">${msg}</div>` : ''}
+      <div class="gate-btns"><button type="button" class="btn primary block lg" data-gate="signup">Sign up (new company)</button><button type="button" class="btn block lg" data-gate="signin">Sign in (existing company)</button></div>
+      <p class="sm muted center">Your data is stored safely in the cloud. After the company sign-in, every employee logs in with their own username and password.</p>`));
+    this.bindAuthCommon();
+    $('[data-gate=signup]').onclick = () => this.showCompanySignup();
+    $('[data-gate=signin]').onclick = () => this.showCompanyLogin();
+  },
+  showCompanySignup() {
+    $('#app').innerHTML = String(this.authFrame(html`<h2>Create your company account</h2><p class="muted">Step 1: the company's own sign-in. Next you will add company details and the first administrator.</p>
+      <form id="co-form" novalidate class="grid-form">
+        <label class="fld full"><span>Company name<b class="req">*</b></span><input name="name" autocomplete="organization" required autofocus><small class="err" data-err-for="name"></small></label>
+        <label class="fld full"><span>Company username<b class="req">*</b></span><input name="id" autocomplete="off" autocapitalize="none" required placeholder="e.g. acme-solutions"><small class="help">3-30 letters, numbers, dot, dash. This is how your company signs in, from any computer.</small><small class="err" data-err-for="id"></small></label>
+        <label class="fld full"><span>Company password<b class="req">*</b></span><div class="pw-wrap"><input name="password" type="password" autocomplete="new-password" required data-strength><button type="button" class="icon-btn" data-pw-eye aria-label="Show password">${icon('eye')}</button></div><div class="pw-meter" data-meter><i></i></div><small class="help">8+ characters with upper &amp; lower case letters and a number.</small><small class="err" data-err-for="password"></small></label>
+        <label class="fld full"><span>Confirm password<b class="req">*</b></span><input name="confirm" type="password" autocomplete="new-password" required><small class="err" data-err-for="confirm"></small></label>
+        <button class="btn primary block lg full" type="submit">Create company</button><button type="button" class="btn ghost block full" data-back>Back</button>
+      </form>`));
+    this.bindAuthCommon();
+    $('[data-back]').onclick = () => this.showGate();
+    const f = $('#co-form');
+    f.onsubmit = async (e) => {
+      e.preventDefault(); const v = Object.fromEntries(new FormData(f)); const errs = {}; const id = String(v.id || '').trim().toLowerCase();
+      if (!String(v.name || '').trim()) errs.name = 'Enter your company name';
+      if (!/^[a-z0-9._-]{3,30}$/.test(id)) errs.id = 'Use 3-30 letters, numbers, dot, dash or underscore';
+      const pe = Auth.policy(v.password); if (pe) errs.password = pe; else if (v.password !== v.confirm) errs.confirm = 'Passwords do not match';
+      if (Object.keys(errs).length) { showErrors(f, errs); return; }
+      const b = f.querySelector('button[type=submit]'); b.disabled = true; b.textContent = 'Creating…';
+      try {
+        if (!(await Cloud.idFree(id))) { showErrors(f, { id: 'This company username is already taken. Please choose another.' }); b.disabled = false; b.textContent = 'Create company'; return; }
+        await Cloud.signupCompany(id, v.name.trim(), v.password);
+        this.showSetup();
+      } catch (ex) { showErrors(f, { id: ex.message }); b.disabled = false; b.textContent = 'Create company'; }
+    };
+  },
+  showCompanyLogin(msg = '') {
+    const remembered = localStorage.getItem('crm_co_remember') || '';
+    $('#app').innerHTML = String(this.authFrame(html`<h2>Company sign in</h2><p class="muted">Enter your company's username and password.</p>
+      ${msg ? html`<div class="note ok">${msg}</div>` : ''}
+      <form id="col-form" novalidate>
+        <label class="fld"><span>Company username</span><input name="id" autocomplete="off" autocapitalize="none" value="${remembered}" required autofocus></label>
+        <label class="fld"><span>Company password</span><div class="pw-wrap"><input name="password" type="password" autocomplete="current-password" required><button type="button" class="icon-btn" data-pw-eye aria-label="Show password">${icon('eye')}</button></div></label>
+        <p class="err" data-e role="alert"></p>
+        <button class="btn primary block lg" type="submit">Continue</button><button type="button" class="btn ghost block" data-back>Back</button>
+      </form>`));
+    this.bindAuthCommon();
+    $('[data-back]').onclick = () => this.showGate();
+    const f = $('#col-form');
+    f.onsubmit = async (e) => {
+      e.preventDefault(); const err = $('[data-e]'); err.textContent = ''; const id = f.id.value.trim().toLowerCase();
+      if (!id || !f.password.value) { err.textContent = 'Enter the company username and password.'; return; }
+      const b = f.querySelector('button[type=submit]'); b.disabled = true; b.textContent = 'Signing in…';
+      try { await Cloud.signIn(id, f.password.value); localStorage.setItem('crm_co_remember', id); needsSetup() ? this.showSetup() : this.showLogin(); }
+      catch (ex) { err.textContent = ex.message; f.password.value = ''; b.disabled = false; b.textContent = 'Continue'; f.classList.add('shake'); setTimeout(() => f.classList.remove('shake'), 400); }
+    };
   },
   showLogin(tab = 'signin', msg = '') {
     Auth.locked = false;
     const remembered = localStorage.getItem('crm_remember') || '';
     const allowReg = Store.s.settings.allowRegistration;
-    const tabs = html`<div class="auth-tabs" role="tablist"><button type="button" role="tab" class="${tab === 'signin' ? 'on' : ''}" data-auth-tab="signin" aria-selected="${tab === 'signin'}">Sign in</button>${allowReg ? html`<button type="button" role="tab" class="${tab === 'register' ? 'on' : ''}" data-auth-tab="register" aria-selected="${tab === 'register'}">Create account</button>` : ''}</div>`;
-    const signin = html`<h2>Welcome back</h2><p class="muted">Sign in to continue to your workspace.</p>
+    const tabs = html`<div class="auth-tabs" role="tablist"><button type="button" role="tab" class="${tab === 'signin' ? 'on' : ''}" data-auth-tab="signin" aria-selected="${tab === 'signin'}">Employee sign in</button>${allowReg ? html`<button type="button" role="tab" class="${tab === 'register' ? 'on' : ''}" data-auth-tab="register" aria-selected="${tab === 'register'}">Request access</button>` : ''}</div>`;
+    const signin = html`<h2>${Brand.name() || 'Welcome back'}</h2><p class="muted">Employee sign in: enter your own username and password.</p>
       ${msg ? html`<div class="note ok">${msg}</div>` : ''}
       <form id="login-form" novalidate autocomplete="on">
         <label class="fld"><span>Username or email</span><input name="username" autocomplete="username" value="${remembered}" required autofocus></label>
@@ -94,7 +154,7 @@ const App = {
         <div class="row-between"><label class="chk"><input type="checkbox" name="remember" ${remembered ? raw('checked') : ''}> <span>Remember username</span></label><a href="#" data-forgot>Forgot password?</a></div>
         <p class="err" data-login-err role="alert"></p>
         <button class="btn primary block lg" type="submit">Sign in</button>
-      </form>${Store.s.clients.length === 0 && Store.s.users.length <= 1 ? html`<p class="sm center mt"><a href="#" data-restore>Lost your data? Restore from your auto-save or backup file</a></p>` : ''}`;
+      </form><p class="sm center mt"><a href="#" data-switch-co>Not your company? Switch company</a></p>`;
     const register = html`<h2>Create your account</h2><p class="muted">${Store.s.settings.requireApproval ? 'An administrator will review and approve your account.' : 'Your account will be active immediately.'}</p>
       <form id="reg-form" novalidate class="grid-form">
         <label class="fld full"><span>Full name<b class="req">*</b></span><input name="name" autocomplete="name" required><small class="err" data-err-for="name"></small></label>
@@ -122,7 +182,7 @@ const App = {
         if (lf.remember.checked) localStorage.setItem('crm_remember', u); else localStorage.removeItem('crm_remember');
         this.afterPassword(r.user, r.next);
       };
-      const rs = $('[data-restore]'); if (rs) rs.onclick = (e) => { e.preventDefault(); DataFile.restoreFromFile(); };
+      const sw = $('[data-switch-co]'); if (sw) sw.onclick = (e) => { e.preventDefault(); Actions['cloud:leave'](); };
       $('[data-forgot]').onclick = (e) => { e.preventDefault(); Modal.open({ title: 'Forgot password', size: 'sm', body: html`<p>For security, passwords are stored as one-way hashes and cannot be recovered.</p><p>Please ask your <b>Super Admin / Admin</b> to reset it from <b>Settings › Users › Reset password</b>. You will be asked to choose a new password at your next sign-in.</p>`, foot: html`<button type="button" class="btn primary" data-close>OK</button>` }); };
     }
     const rf = $('#reg-form');

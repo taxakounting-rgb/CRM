@@ -74,33 +74,6 @@ const Settings = {
 
 /* ---------- Backup, restore, snapshots ---------- */
 const Backup = {
-  async exportJSON(withDocs = true) {
-    const out = { app: Brand.appName(), format: 1, exportedAt: new Date().toISOString(), exportedBy: Auth.user ? Auth.user.username : '', state: Store.s, blobs: {} };
-    if (withDocs) {
-      for (const d of Store.s.documents) for (const v of d.versions) {
-        try { const b = await IDB.get('blobs', v.vid); if (b) out.blobs[v.vid] = { type: b.type || v.type, data: Crypto.b64(await b.arrayBuffer()) }; } catch (e) { /* skip missing */ }
-      }
-    }
-    downloadFile(`${(Brand.name() || 'CRM').replace(/[^\w]+/g, '_')}_Backup_${today()}.json`, JSON.stringify(out), 'application/json');
-    Auth.audit('export', 'settings', `Full backup exported${withDocs ? ' (with documents)' : ''}`);
-    Store.commit((s) => { s.settings.lastBackup = new Date().toISOString(); }, { silent: true });
-    toast('Backup downloaded');
-  },
-  async importJSON(file) {
-    let data; try { data = JSON.parse(await file.text()); } catch (e) { toast('This is not a valid backup file', 'err'); return; }
-    const st = data && (data.state || data);
-    if (!st || !Array.isArray(st.clients) || !Array.isArray(st.users) || !st.users.length) { toast('Backup file is missing required data', 'err'); return; }
-    if (!(await confirmDlg(html`Restore backup from <b>${fmtDateTime(data.exportedAt)}</b>?<br>${st.clients.length} clients, ${st.tasks.length} tasks, ${(st.invoices || []).length} invoices, ${Object.keys(data.blobs || {}).length} files.<br><br><span class="warn-txt">All current data in this browser will be replaced. A snapshot of the current data is taken first.</span>`, { danger: true, ok: 'Restore' }))) return;
-    await this.snapshot('before-restore');
-    for (const [vid, b] of Object.entries(data.blobs || {})) await IDB.put('blobs', vid, new Blob([Crypto.unb64(b.data)], { type: b.type }));
-    const me = Auth.user ? Auth.user.username : '';
-    const lic = Store.s.license; Store.s = Object.assign(Store.blank(), st); Store.s.license = lic; Store.saveNow();
-    Auth.user = Store.s.users.find((u) => u.username === me && u.status === 'active') || null;
-    Auth.audit('import', 'settings', `Backup restored (exported ${data.exportedAt || 'unknown'})`, { user: me });
-    Store.saveNow();
-    if (!Auth.user) { toast('Backup restored. Please sign in.'); Auth.logout('backup restored'); return; }
-    Bus.emit('change', {}); toast('Backup restored successfully');
-  },
   async snapshot(tag) {
     try {
       const key = tag ? `${today()}_${tag}_${Date.now()}` : today();
@@ -137,7 +110,7 @@ Views.settings = {
   allow: () => Auth.can('settings') || Auth.can('users'),
   render(params) {
     const tabs = [];
-    if (Auth.can('settings')) tabs.push(['company', 'Company'], ['lists', 'Master Lists'], ['branches', 'Branches'], ['numbering', 'Numbering'], ['templates', 'Templates'], ['prefs', 'Preferences'], ['backup', 'Backup & Restore']);
+    if (Auth.can('settings')) tabs.push(['company', 'Company'], ['lists', 'Master Lists'], ['branches', 'Branches'], ['numbering', 'Numbering'], ['templates', 'Templates'], ['prefs', 'Preferences'], ['backup', 'Cloud & Data']);
     if (Auth.can('users')) tabs.splice(2, 0, ['users', 'Users'], ['roles', 'Roles & Permissions']);
     const f = vs('settings'); const tab = params[0] && tabs.some((t) => t[0] === params[0]) ? params[0] : (f.tab && tabs.some((t) => t[0] === f.tab) ? f.tab : tabs[0][0]);
     if (params[0]) f.tab = tab;
@@ -223,13 +196,13 @@ Views.settings = {
       <div class="card"><h3>Themes</h3><div data-theme-gallery>${ThemeUI.gallery(true)}</div></div>`;
   },
   t_backup() {
-    const s = Store.s; const ro = this.ro(); const bytes = (localStorage.getItem(LS_KEY) || '').length * 2;
-    return html`${DataFile.card(ro)}<div class="grid2"><div class="card"><h3>Backup</h3><p>Download everything (clients, tasks, invoices, users, settings, encrypted vault entries and document files) as one JSON file. Keep it somewhere safe — it contains confidential client data.</p><p class="muted sm">Last backup: ${s.settings.lastBackup ? fmtDateTime(s.settings.lastBackup) : 'never'} · Data size ≈ ${fmtSize(bytes)}</p>
-        <label class="chk"><input type="checkbox" data-bk-docs checked> <span>Include document files</span></label><div class="row-acts mt">${Auth.can('settings', 'export') ? btn('Export full backup', 'bk:export', { cls: 'primary', icon: 'download' }) : ''}</div></div>
-      <div class="card"><h3>Restore</h3><p>Restore from a backup file. Current data is replaced (a safety snapshot is taken first).</p>${ro ? html`<p class="muted">Requires Settings edit permission.</p>` : html`<input type="file" accept=".json,application/json" data-bk-import aria-label="Backup file">`}</div>
-      <div class="card"><h3>Daily snapshots</h3><p class="muted sm">A snapshot of your data is saved automatically once a day in this browser (last 7 kept).</p><div data-snaps>${skeleton(3)}</div>${ro ? '' : btn('Take snapshot now', 'bk:snap', { cls: 'sm ghost' })}</div>
-      <div class="card"><h3>Reset records</h3><p>Delete all clients, tasks, invoices and other records to start fresh. Your company profile, users and Master Lists are kept.</p>${ro ? '' : html`<div class="row-acts">${btn('Reset to empty', 'bk:wipe', { cls: 'danger' })}</div>`}</div></div>`;
+    const ro = this.ro();
+    return html`${Cloud.card()}<div class="grid2">
+      <div class="card"><h3>Daily snapshots</h3><p class="muted sm">A safety copy of your data is kept automatically once a day on this computer (last 7). Your real data is in the cloud.</p><div data-snaps>${skeleton(3)}</div>${ro ? '' : btn('Take snapshot now', 'bk:snap', { cls: 'sm ghost' })}</div>
+      <div class="card"><h3>Reset records</h3><p>Delete all clients, tasks, invoices and other records to start fresh. Your company profile, users and Master Lists are kept.</p>${ro ? '' : html`<div class="row-acts">${btn('Reset to empty', 'bk:wipe', { cls: 'danger' })}</div>`}</div>
+      <div class="card"><h3>Company sign-in</h3><p>Company username: <b>${Cloud.company() || '—'}</b></p><p class="muted sm">Use "Switch company" on the employee sign-in screen to leave this company on a shared computer.</p>${btn('Sign out of company', 'cloud:leave', { cls: 'sm ghost' })}</div></div>`;
   },
+
   async mountSnaps(root) {
     const box = root.querySelector('[data-snaps]'); if (!box) return;
     try { const keys = (await IDB.keys('snapshots')).sort().reverse(); const items = []; for (const k of keys) { const s = await IDB.get('snapshots', k); items.push({ k, at: s.at, n: (s.state.clients || []).length }); }
@@ -263,7 +236,6 @@ Views.settings = {
     if (nb) nb.onsubmit = (e) => { e.preventDefault(); const fd = Object.fromEntries(new FormData(nb)); Store.commit((s) => { ['task', 'emp', 'inv', 'doc', 'rcpt', 'exp'].forEach((k) => { s.settings.prefixes[k] = fd['p_' + k]; s.counters[k] = Math.max(0, parseInt(fd['c_' + k], 10) || 0); }); }); Auth.audit('edit', 'settings', 'Numbering prefixes/counters updated'); toast('Numbering saved'); };
     const pf = root.querySelector('[data-prefs]');
     if (pf) { pf.onsubmit = (e) => { e.preventDefault(); const fd = Object.fromEntries(new FormData(pf)); Store.commit((s) => { Object.entries(fd).forEach(([k, v]) => { s.settings[k] = Number(v); }); }); Auth.audit('edit', 'settings', 'Preferences updated', { new: fd }); toast('Preferences saved'); }; }
-    const bi = root.querySelector('[data-bk-import]'); if (bi) bi.onchange = () => { if (bi.files[0]) Backup.importJSON(bi.files[0]); bi.value = ''; };
   }
 };
 
@@ -314,7 +286,6 @@ const ttplForm = (t, i) => formModal({ title: t ? 'Edit task template' : 'New ta
 act('ttpl:new', () => ttplForm());
 act('ttpl:edit', (a) => ttplForm(Store.s.settings.taskTemplates[+a.dataset.id], +a.dataset.id));
 act('ttpl:del', async (a) => { if (await confirmDlg('Delete this task template?', { danger: true, ok: 'Delete' })) Store.commit((s) => s.settings.taskTemplates.splice(+a.dataset.id, 1)); });
-act('bk:export', () => Backup.exportJSON(!!($('[data-bk-docs]') || {}).checked));
 act('bk:snap', async () => { await Backup.snapshot('manual'); toast('Snapshot saved'); Router.refresh(); });
 act('bk:restore', (a) => Backup.restoreSnapshot(a.dataset.id));
 act('bk:wipe', () => Backup.wipe());

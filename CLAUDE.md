@@ -26,7 +26,8 @@ A complete, dynamic CRM as ONE offline HTML file for any company (agency, accoun
 - Permissions are data (editable matrix), not if-statements on role names.
 - Must work from `file://` in Chrome/Edge, offline, 1,000+ records.
 
-## Cloud sync (added)
-- `api/sync.js` Vercel function + Upstash Redis (env KV_REST_API_URL/TOKEN, CRM_SECRET). `src/js/22-cloud.js` is the client. First screen = `App.showGate()` (Log in / Sign up).
-- Password never sent; only PBKDF2 hash. State blob synced as a whole with version numbers (conflict = newer cloud copy wins, local snapshot kept). Document blobs (IDB) are NOT synced.
-- Test: `node scripts/cloud-test.mjs` (fake Redis, no network).
+## Cloud, multi-company (current design)
+- First screen = company Sign up / Sign in (`App.showGate`, `showCompanySignup`, `showCompanyLogin`). After company sign-in, employees use the normal login (`showLogin`) against the users inside that company's state.
+- `api/sync.js` (Vercel function + Upstash Redis; env KV_REST_API_URL/TOKEN, CRM_SECRET). Keys: crm:co:<companyId> -> {ws, salt, h2}; crm:state:<ws>; crm:meta:<ws>; crm:blob:<ws>:<vid>.
+- `src/js/22-cloud.js`: company account, versioned whole-state sync (conflict = newer cloud copy wins, local snapshot kept), document files in cloud (max 3 MB), local browser copy is only a cache.
+- No backup/restore/auto-save-file UI (removed on purpose). Tests: `node scripts/cloud-test.mjs`, `node scripts/dev-server.mjs` + `python3 scripts/e2e-cloud.py`.

@@ -353,3 +353,6 @@ textarea.mono{font-family:Consolas,"DejaVu Sans Mono",monospace;font-size:12px;w
 .th-pick{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--muted)}.th-pick input{width:64px;height:38px;border:1px solid var(--line);border-radius:8px;padding:2px;background:var(--surface);cursor:pointer}
 input[type=color]{height:38px;min-width:56px;padding:3px;cursor:pointer}
 .auth-logo .gen-logo b{display:none}
+
+.gate-btns{display:grid;gap:12px;margin:22px 0 16px}
+.gate-btns .btn{justify-content:center}

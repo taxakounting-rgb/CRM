@@ -363,6 +363,9 @@ textarea.mono{font-family:Consolas,"DejaVu Sans Mono",monospace;font-size:12px;w
 input[type=color]{height:38px;min-width:56px;padding:3px;cursor:pointer}
 .auth-logo .gen-logo b{display:none}
 
+.gate-btns{display:grid;gap:12px;margin:22px 0 16px}
+.gate-btns .btn{justify-content:center}
+
 </style>
 </head>
 <body>
@@ -510,7 +513,7 @@ const Store = {
       if (Date.now() - this.lastWarn > 60000) { this.lastWarn = Date.now(); if (window.toast) toast('Browser storage is full. Data is kept in IndexedDB; please export a backup.', 'warn'); }
     }
     IDB.put('kv', 'state', JSON.parse(json)).catch(() => {});
-    if (typeof DataFile !== 'undefined') DataFile.schedule();
+    if (typeof Cloud !== 'undefined') Cloud.schedule();
   },
   /* Next auto-number from counters with configurable prefix. */
   next(kind) {
@@ -1406,7 +1409,7 @@ const Router = {
     else if (permMod !== 'any' && !(v.allow ? v.allow() : Auth.can(permMod))) out = emptyState('Access denied', 'Your role does not have permission to view this page. Ask the administrator to update your role permissions.');
     else { try { out = v.render(this.cur.params, this.cur.query); } catch (e) { console.warn(e); out = emptyState('Something went wrong', e.message); } }
     main.ondragover = main.ondrop = main.ondragleave = null;
-    main.innerHTML = String(License.banner()) + String(DataFile.banner()) + String(out);
+    main.innerHTML = String(License.banner()) + String(out);
     if (v && v.mount) { try { v.mount(main, this.cur.params, this.cur.query); } catch (e) { console.warn(e); } }
     Charts.hydrate(main);
     if (fid) { const el = document.getElementById(fid); if (el) { el.focus(); if (sel && el.setSelectionRange) try { el.setSelectionRange(sel[0], sel[1]); } catch (e) { /* ignore */ } } }
@@ -1422,12 +1425,13 @@ const App = {
     await Seed.ensure();
     await License.load();
     setFavicon();
-    await DataFile.init();
+    await Cloud.init();
     Theme.apply(); document.title = Brand.appName();
     Backup.autoSnapshot();
     window.addEventListener('hashchange', () => Router.go());
     Bus.on('change', () => { Auth._cache = null; Router.refresh(); });
     setInterval(async () => { const before = License.info.status; await License.load(); if (License.info.status !== before) { App.renderChrome(); Router.refresh(); } }, 3600000);
+    if (!Cloud.linked()) { this.showGate(); return; }
     if (needsSetup()) { this.showSetup(); return; }
     const r = Auth.resume();
     if (r && r.locked) { Auth.locked = true; this.showLock(); }
@@ -1438,15 +1442,74 @@ const App = {
   /* ---------- Auth screens ---------- */
   authFrame(inner) {
     const c = Store.s.settings.company || {};
-    return html`<div class="auth-wrap"><div class="auth-brand"><div class="auth-logo">${brandLogo()}</div><h1>${Brand.appName()}</h1><p>Clients, tasks, invoices, documents and reports, all in one workspace.</p><ul class="auth-feats"><li>${icon('check')} Clients, tasks &amp; deadlines</li><li>${icon('check')} Invoices, payments &amp; expenses</li><li>${icon('check')} Documents &amp; encrypted credential vault</li><li>${icon('check')} Works offline: your data stays on this computer</li></ul><p class="auth-foot">${[c.website, c.phone].filter(Boolean).join(' · ')}${c.address ? html`<br>${c.address}` : ''}</p></div>
+    return html`<div class="auth-wrap"><div class="auth-brand"><div class="auth-logo">${brandLogo()}</div><h1>${Brand.appName()}</h1><p>Clients, tasks, invoices, documents and reports, all in one workspace.</p><ul class="auth-feats"><li>${icon('check')} Clients, tasks &amp; deadlines</li><li>${icon('check')} Invoices, payments &amp; expenses</li><li>${icon('check')} Documents &amp; encrypted credential vault</li><li>${icon('check')} Sign in from any computer: your data is saved in the cloud</li></ul><p class="auth-foot">${[c.website, c.phone].filter(Boolean).join(' · ')}${c.address ? html`<br>${c.address}` : ''}</p></div>
       <div class="auth-side"><div class="auth-card">${inner}</div><button type="button" class="btn ghost sm theme-mini" data-theme-toggle>${icon(Theme.dark() ? 'sun' : 'moon')}<span>${Theme.dark() ? 'Light' : 'Dark'} mode</span></button></div></div>`;
+  },
+  /* First screen: company Sign up / Sign in */
+  showGate(msg = '') {
+    Auth.locked = false;
+    if (!Cloud.avail) { $('#app').innerHTML = String(this.authFrame(html`<h2>Server not connected</h2><div class="note">The cloud database is not connected yet. Open this app from your hosted web address (Vercel) after the owner has connected the database. See README for the 3 setup steps.</div>`)); this.bindAuthCommon(); return; }
+    $('#app').innerHTML = String(this.authFrame(html`<h2>Welcome</h2><p class="muted">Start your own CRM in minutes, or sign in to your company's CRM from anywhere.</p>
+      ${msg ? html`<div class="note ok">${msg}</div>` : ''}
+      <div class="gate-btns"><button type="button" class="btn primary block lg" data-gate="signup">Sign up (new company)</button><button type="button" class="btn block lg" data-gate="signin">Sign in (existing company)</button></div>
+      <p class="sm muted center">Your data is stored safely in the cloud. After the company sign-in, every employee logs in with their own username and password.</p>`));
+    this.bindAuthCommon();
+    $('[data-gate=signup]').onclick = () => this.showCompanySignup();
+    $('[data-gate=signin]').onclick = () => this.showCompanyLogin();
+  },
+  showCompanySignup() {
+    $('#app').innerHTML = String(this.authFrame(html`<h2>Create your company account</h2><p class="muted">Step 1: the company's own sign-in. Next you will add company details and the first administrator.</p>
+      <form id="co-form" novalidate class="grid-form">
+        <label class="fld full"><span>Company name<b class="req">*</b></span><input name="name" autocomplete="organization" required autofocus><small class="err" data-err-for="name"></small></label>
+        <label class="fld full"><span>Company username<b class="req">*</b></span><input name="id" autocomplete="off" autocapitalize="none" required placeholder="e.g. acme-solutions"><small class="help">3-30 letters, numbers, dot, dash. This is how your company signs in, from any computer.</small><small class="err" data-err-for="id"></small></label>
+        <label class="fld full"><span>Company password<b class="req">*</b></span><div class="pw-wrap"><input name="password" type="password" autocomplete="new-password" required data-strength><button type="button" class="icon-btn" data-pw-eye aria-label="Show password">${icon('eye')}</button></div><div class="pw-meter" data-meter><i></i></div><small class="help">8+ characters with upper &amp; lower case letters and a number.</small><small class="err" data-err-for="password"></small></label>
+        <label class="fld full"><span>Confirm password<b class="req">*</b></span><input name="confirm" type="password" autocomplete="new-password" required><small class="err" data-err-for="confirm"></small></label>
+        <button class="btn primary block lg full" type="submit">Create company</button><button type="button" class="btn ghost block full" data-back>Back</button>
+      </form>`));
+    this.bindAuthCommon();
+    $('[data-back]').onclick = () => this.showGate();
+    const f = $('#co-form');
+    f.onsubmit = async (e) => {
+      e.preventDefault(); const v = Object.fromEntries(new FormData(f)); const errs = {}; const id = String(v.id || '').trim().toLowerCase();
+      if (!String(v.name || '').trim()) errs.name = 'Enter your company name';
+      if (!/^[a-z0-9._-]{3,30}$/.test(id)) errs.id = 'Use 3-30 letters, numbers, dot, dash or underscore';
+      const pe = Auth.policy(v.password); if (pe) errs.password = pe; else if (v.password !== v.confirm) errs.confirm = 'Passwords do not match';
+      if (Object.keys(errs).length) { showErrors(f, errs); return; }
+      const b = f.querySelector('button[type=submit]'); b.disabled = true; b.textContent = 'Creating…';
+      try {
+        if (!(await Cloud.idFree(id))) { showErrors(f, { id: 'This company username is already taken. Please choose another.' }); b.disabled = false; b.textContent = 'Create company'; return; }
+        await Cloud.signupCompany(id, v.name.trim(), v.password);
+        this.showSetup();
+      } catch (ex) { showErrors(f, { id: ex.message }); b.disabled = false; b.textContent = 'Create company'; }
+    };
+  },
+  showCompanyLogin(msg = '') {
+    const remembered = localStorage.getItem('crm_co_remember') || '';
+    $('#app').innerHTML = String(this.authFrame(html`<h2>Company sign in</h2><p class="muted">Enter your company's username and password.</p>
+      ${msg ? html`<div class="note ok">${msg}</div>` : ''}
+      <form id="col-form" novalidate>
+        <label class="fld"><span>Company username</span><input name="id" autocomplete="off" autocapitalize="none" value="${remembered}" required autofocus></label>
+        <label class="fld"><span>Company password</span><div class="pw-wrap"><input name="password" type="password" autocomplete="current-password" required><button type="button" class="icon-btn" data-pw-eye aria-label="Show password">${icon('eye')}</button></div></label>
+        <p class="err" data-e role="alert"></p>
+        <button class="btn primary block lg" type="submit">Continue</button><button type="button" class="btn ghost block" data-back>Back</button>
+      </form>`));
+    this.bindAuthCommon();
+    $('[data-back]').onclick = () => this.showGate();
+    const f = $('#col-form');
+    f.onsubmit = async (e) => {
+      e.preventDefault(); const err = $('[data-e]'); err.textContent = ''; const id = f.id.value.trim().toLowerCase();
+      if (!id || !f.password.value) { err.textContent = 'Enter the company username and password.'; return; }
+      const b = f.querySelector('button[type=submit]'); b.disabled = true; b.textContent = 'Signing in…';
+      try { await Cloud.signIn(id, f.password.value); localStorage.setItem('crm_co_remember', id); needsSetup() ? this.showSetup() : this.showLogin(); }
+      catch (ex) { err.textContent = ex.message; f.password.value = ''; b.disabled = false; b.textContent = 'Continue'; f.classList.add('shake'); setTimeout(() => f.classList.remove('shake'), 400); }
+    };
   },
   showLogin(tab = 'signin', msg = '') {
     Auth.locked = false;
     const remembered = localStorage.getItem('crm_remember') || '';
     const allowReg = Store.s.settings.allowRegistration;
-    const tabs = html`<div class="auth-tabs" role="tablist"><button type="button" role="tab" class="${tab === 'signin' ? 'on' : ''}" data-auth-tab="signin" aria-selected="${tab === 'signin'}">Sign in</button>${allowReg ? html`<button type="button" role="tab" class="${tab === 'register' ? 'on' : ''}" data-auth-tab="register" aria-selected="${tab === 'register'}">Create account</button>` : ''}</div>`;
-    const signin = html`<h2>Welcome back</h2><p class="muted">Sign in to continue to your workspace.</p>
+    const tabs = html`<div class="auth-tabs" role="tablist"><button type="button" role="tab" class="${tab === 'signin' ? 'on' : ''}" data-auth-tab="signin" aria-selected="${tab === 'signin'}">Employee sign in</button>${allowReg ? html`<button type="button" role="tab" class="${tab === 'register' ? 'on' : ''}" data-auth-tab="register" aria-selected="${tab === 'register'}">Request access</button>` : ''}</div>`;
+    const signin = html`<h2>${Brand.name() || 'Welcome back'}</h2><p class="muted">Employee sign in: enter your own username and password.</p>
       ${msg ? html`<div class="note ok">${msg}</div>` : ''}
       <form id="login-form" novalidate autocomplete="on">
         <label class="fld"><span>Username or email</span><input name="username" autocomplete="username" value="${remembered}" required autofocus></label>
@@ -1454,7 +1517,7 @@ const App = {
         <div class="row-between"><label class="chk"><input type="checkbox" name="remember" ${remembered ? raw('checked') : ''}> <span>Remember username</span></label><a href="#" data-forgot>Forgot password?</a></div>
         <p class="err" data-login-err role="alert"></p>
         <button class="btn primary block lg" type="submit">Sign in</button>
-      </form>${Store.s.clients.length === 0 && Store.s.users.length <= 1 ? html`<p class="sm center mt"><a href="#" data-restore>Lost your data? Restore from your auto-save or backup file</a></p>` : ''}`;
+      </form><p class="sm center mt"><a href="#" data-switch-co>Not your company? Switch company</a></p>`;
     const register = html`<h2>Create your account</h2><p class="muted">${Store.s.settings.requireApproval ? 'An administrator will review and approve your account.' : 'Your account will be active immediately.'}</p>
       <form id="reg-form" novalidate class="grid-form">
         <label class="fld full"><span>Full name<b class="req">*</b></span><input name="name" autocomplete="name" required><small class="err" data-err-for="name"></small></label>
@@ -1482,7 +1545,7 @@ const App = {
         if (lf.remember.checked) localStorage.setItem('crm_remember', u); else localStorage.removeItem('crm_remember');
         this.afterPassword(r.user, r.next);
       };
-      const rs = $('[data-restore]'); if (rs) rs.onclick = (e) => { e.preventDefault(); DataFile.restoreFromFile(); };
+      const sw = $('[data-switch-co]'); if (sw) sw.onclick = (e) => { e.preventDefault(); Actions['cloud:leave'](); };
       $('[data-forgot]').onclick = (e) => { e.preventDefault(); Modal.open({ title: 'Forgot password', size: 'sm', body: html`<p>For security, passwords are stored as one-way hashes and cannot be recovered.</p><p>Please ask your <b>Super Admin / Admin</b> to reset it from <b>Settings › Users › Reset password</b>. You will be asked to choose a new password at your next sign-in.</p>`, foot: html`<button type="button" class="btn primary" data-close>OK</button>` }); };
     }
     const rf = $('#reg-form');
@@ -3052,14 +3115,15 @@ act('exp:del', async (a) => { const x = Store.s.expenses.find((e) => e.id === a.
    ========================================================================== */
 const Docs = {
   cur(d) { return (d.versions || []).find((v) => v.vid === d.current) || (d.versions || [])[d.versions.length - 1] || {}; },
-  maxMB() { return Number(Store.s.settings.maxUploadMB) || 10; },
+  maxMB() { return Math.min(Number(Store.s.settings.maxUploadMB) || 10, Cloud.maxFileMB()); },
   expiryInfo(d) { if (!d.expiry) return null; const n = daysBetween(today(), d.expiry); return { n, tone: n < 0 ? 'red' : n <= 30 ? 'amber' : 'green', label: n < 0 ? `Expired ${-n}d ago` : n === 0 ? 'Expires today' : `Expires in ${n}d` }; },
   async checkSizes(files) {
     const big = files.filter((f) => f.size > this.maxMB() * 1048576);
+    if (big.length && Cloud.avail) { toast(`Cloud storage accepts files up to ${this.maxMB()} MB. Too large: ${big.map((f) => f.name).join(', ')}`, 'warn', { timeout: 7000 }); return false; }
     if (big.length && !(await confirmDlg(html`${big.length} file(s) are larger than the ${this.maxMB()} MB limit:<br><b>${big.map((f) => `${f.name} (${fmtSize(f.size)})`).join(', ')}</b><br><br>Large files use browser storage quickly. Upload anyway?`, { ok: 'Upload anyway' }))) return false;
     return true;
   },
-  async saveBlob(vid, file) { await IDB.put('blobs', vid, file); },
+  async saveBlob(vid, file) { try { await Cloud.putBlob(vid, file); } catch (e) { toast('Could not save the file to the cloud: ' + e.message, 'err', { timeout: 7000 }); throw e; } await IDB.put('blobs', vid, file); },
   upload(preset = {}) {
     let files = [];
     Modal.open({
@@ -3117,7 +3181,7 @@ const Docs = {
       foot: html`${Auth.can('documents', 'edit') ? btn('Upload new version', 'doc:version', { id: d.id, icon: 'upload', cls: 'primary' }) : ''}<button type="button" class="btn ghost" data-close>Close</button>`
     });
   },
-  async blob(d, vid) { const b = await IDB.get('blobs', vid || d.current); if (!b) throw new Error('File data not found in this browser.'); return b; },
+  async blob(d, vid) { const id = vid || d.current; let b = await IDB.get('blobs', id); if (!b) { try { b = await Cloud.getBlob(id); } catch (e) { b = null; } if (b) IDB.put('blobs', id, b).catch(() => {}); } if (!b) throw new Error('File not found in the cloud storage.'); return b; },
   async preview(d) {
     const v = this.cur(d); let url = ''; let b;
     try { b = await this.blob(d); url = URL.createObjectURL(b); } catch (e) { toast(e.message, 'err'); return; }
@@ -3199,7 +3263,7 @@ act('doc:vrestore', async (a) => {
 act('doc:edit', (a) => Docs.edit(docOf(a)));
 act('doc:del', async (a) => {
   const d = docOf(a); if (!(await confirmDlg(`Delete ${d.code} "${d.name}" and all its versions?`, { danger: true, ok: 'Delete' }))) return;
-  Rec.remove('documents', d, `Document ${d.code}`, 'documents', () => setTimeout(() => { if (!Store.s.documents.includes(d)) d.versions.forEach((v) => IDB.del('blobs', v.vid).catch(() => {})); }, 7000));
+  Rec.remove('documents', d, `Document ${d.code}`, 'documents', () => setTimeout(() => { if (!Store.s.documents.includes(d)) d.versions.forEach((v) => { IDB.del('blobs', v.vid).catch(() => {}); Cloud.delBlob(v.vid).catch(() => {}); }); }, 7000));
 });
 
 /* ---- 14-notifications.js ---- */
@@ -3547,33 +3611,6 @@ const Settings = {
 
 /* ---------- Backup, restore, snapshots ---------- */
 const Backup = {
-  async exportJSON(withDocs = true) {
-    const out = { app: Brand.appName(), format: 1, exportedAt: new Date().toISOString(), exportedBy: Auth.user ? Auth.user.username : '', state: Store.s, blobs: {} };
-    if (withDocs) {
-      for (const d of Store.s.documents) for (const v of d.versions) {
-        try { const b = await IDB.get('blobs', v.vid); if (b) out.blobs[v.vid] = { type: b.type || v.type, data: Crypto.b64(await b.arrayBuffer()) }; } catch (e) { /* skip missing */ }
-      }
-    }
-    downloadFile(`${(Brand.name() || 'CRM').replace(/[^\w]+/g, '_')}_Backup_${today()}.json`, JSON.stringify(out), 'application/json');
-    Auth.audit('export', 'settings', `Full backup exported${withDocs ? ' (with documents)' : ''}`);
-    Store.commit((s) => { s.settings.lastBackup = new Date().toISOString(); }, { silent: true });
-    toast('Backup downloaded');
-  },
-  async importJSON(file) {
-    let data; try { data = JSON.parse(await file.text()); } catch (e) { toast('This is not a valid backup file', 'err'); return; }
-    const st = data && (data.state || data);
-    if (!st || !Array.isArray(st.clients) || !Array.isArray(st.users) || !st.users.length) { toast('Backup file is missing required data', 'err'); return; }
-    if (!(await confirmDlg(html`Restore backup from <b>${fmtDateTime(data.exportedAt)}</b>?<br>${st.clients.length} clients, ${st.tasks.length} tasks, ${(st.invoices || []).length} invoices, ${Object.keys(data.blobs || {}).length} files.<br><br><span class="warn-txt">All current data in this browser will be replaced. A snapshot of the current data is taken first.</span>`, { danger: true, ok: 'Restore' }))) return;
-    await this.snapshot('before-restore');
-    for (const [vid, b] of Object.entries(data.blobs || {})) await IDB.put('blobs', vid, new Blob([Crypto.unb64(b.data)], { type: b.type }));
-    const me = Auth.user ? Auth.user.username : '';
-    const lic = Store.s.license; Store.s = Object.assign(Store.blank(), st); Store.s.license = lic; Store.saveNow();
-    Auth.user = Store.s.users.find((u) => u.username === me && u.status === 'active') || null;
-    Auth.audit('import', 'settings', `Backup restored (exported ${data.exportedAt || 'unknown'})`, { user: me });
-    Store.saveNow();
-    if (!Auth.user) { toast('Backup restored. Please sign in.'); Auth.logout('backup restored'); return; }
-    Bus.emit('change', {}); toast('Backup restored successfully');
-  },
   async snapshot(tag) {
     try {
       const key = tag ? `${today()}_${tag}_${Date.now()}` : today();
@@ -3610,7 +3647,7 @@ Views.settings = {
   allow: () => Auth.can('settings') || Auth.can('users'),
   render(params) {
     const tabs = [];
-    if (Auth.can('settings')) tabs.push(['company', 'Company'], ['lists', 'Master Lists'], ['branches', 'Branches'], ['numbering', 'Numbering'], ['templates', 'Templates'], ['prefs', 'Preferences'], ['backup', 'Backup & Restore']);
+    if (Auth.can('settings')) tabs.push(['company', 'Company'], ['lists', 'Master Lists'], ['branches', 'Branches'], ['numbering', 'Numbering'], ['templates', 'Templates'], ['prefs', 'Preferences'], ['backup', 'Cloud & Data']);
     if (Auth.can('users')) tabs.splice(2, 0, ['users', 'Users'], ['roles', 'Roles & Permissions']);
     const f = vs('settings'); const tab = params[0] && tabs.some((t) => t[0] === params[0]) ? params[0] : (f.tab && tabs.some((t) => t[0] === f.tab) ? f.tab : tabs[0][0]);
     if (params[0]) f.tab = tab;
@@ -3696,13 +3733,13 @@ Views.settings = {
       <div class="card"><h3>Themes</h3><div data-theme-gallery>${ThemeUI.gallery(true)}</div></div>`;
   },
   t_backup() {
-    const s = Store.s; const ro = this.ro(); const bytes = (localStorage.getItem(LS_KEY) || '').length * 2;
-    return html`${DataFile.card(ro)}<div class="grid2"><div class="card"><h3>Backup</h3><p>Download everything (clients, tasks, invoices, users, settings, encrypted vault entries and document files) as one JSON file. Keep it somewhere safe — it contains confidential client data.</p><p class="muted sm">Last backup: ${s.settings.lastBackup ? fmtDateTime(s.settings.lastBackup) : 'never'} · Data size ≈ ${fmtSize(bytes)}</p>
-        <label class="chk"><input type="checkbox" data-bk-docs checked> <span>Include document files</span></label><div class="row-acts mt">${Auth.can('settings', 'export') ? btn('Export full backup', 'bk:export', { cls: 'primary', icon: 'download' }) : ''}</div></div>
-      <div class="card"><h3>Restore</h3><p>Restore from a backup file. Current data is replaced (a safety snapshot is taken first).</p>${ro ? html`<p class="muted">Requires Settings edit permission.</p>` : html`<input type="file" accept=".json,application/json" data-bk-import aria-label="Backup file">`}</div>
-      <div class="card"><h3>Daily snapshots</h3><p class="muted sm">A snapshot of your data is saved automatically once a day in this browser (last 7 kept).</p><div data-snaps>${skeleton(3)}</div>${ro ? '' : btn('Take snapshot now', 'bk:snap', { cls: 'sm ghost' })}</div>
-      <div class="card"><h3>Reset records</h3><p>Delete all clients, tasks, invoices and other records to start fresh. Your company profile, users and Master Lists are kept.</p>${ro ? '' : html`<div class="row-acts">${btn('Reset to empty', 'bk:wipe', { cls: 'danger' })}</div>`}</div></div>`;
+    const ro = this.ro();
+    return html`${Cloud.card()}<div class="grid2">
+      <div class="card"><h3>Daily snapshots</h3><p class="muted sm">A safety copy of your data is kept automatically once a day on this computer (last 7). Your real data is in the cloud.</p><div data-snaps>${skeleton(3)}</div>${ro ? '' : btn('Take snapshot now', 'bk:snap', { cls: 'sm ghost' })}</div>
+      <div class="card"><h3>Reset records</h3><p>Delete all clients, tasks, invoices and other records to start fresh. Your company profile, users and Master Lists are kept.</p>${ro ? '' : html`<div class="row-acts">${btn('Reset to empty', 'bk:wipe', { cls: 'danger' })}</div>`}</div>
+      <div class="card"><h3>Company sign-in</h3><p>Company username: <b>${Cloud.company() || '—'}</b></p><p class="muted sm">Use "Switch company" on the employee sign-in screen to leave this company on a shared computer.</p>${btn('Sign out of company', 'cloud:leave', { cls: 'sm ghost' })}</div></div>`;
   },
+
   async mountSnaps(root) {
     const box = root.querySelector('[data-snaps]'); if (!box) return;
     try { const keys = (await IDB.keys('snapshots')).sort().reverse(); const items = []; for (const k of keys) { const s = await IDB.get('snapshots', k); items.push({ k, at: s.at, n: (s.state.clients || []).length }); }
@@ -3736,7 +3773,6 @@ Views.settings = {
     if (nb) nb.onsubmit = (e) => { e.preventDefault(); const fd = Object.fromEntries(new FormData(nb)); Store.commit((s) => { ['task', 'emp', 'inv', 'doc', 'rcpt', 'exp'].forEach((k) => { s.settings.prefixes[k] = fd['p_' + k]; s.counters[k] = Math.max(0, parseInt(fd['c_' + k], 10) || 0); }); }); Auth.audit('edit', 'settings', 'Numbering prefixes/counters updated'); toast('Numbering saved'); };
     const pf = root.querySelector('[data-prefs]');
     if (pf) { pf.onsubmit = (e) => { e.preventDefault(); const fd = Object.fromEntries(new FormData(pf)); Store.commit((s) => { Object.entries(fd).forEach(([k, v]) => { s.settings[k] = Number(v); }); }); Auth.audit('edit', 'settings', 'Preferences updated', { new: fd }); toast('Preferences saved'); }; }
-    const bi = root.querySelector('[data-bk-import]'); if (bi) bi.onchange = () => { if (bi.files[0]) Backup.importJSON(bi.files[0]); bi.value = ''; };
   }
 };
 
@@ -3787,7 +3823,6 @@ const ttplForm = (t, i) => formModal({ title: t ? 'Edit task template' : 'New ta
 act('ttpl:new', () => ttplForm());
 act('ttpl:edit', (a) => ttplForm(Store.s.settings.taskTemplates[+a.dataset.id], +a.dataset.id));
 act('ttpl:del', async (a) => { if (await confirmDlg('Delete this task template?', { danger: true, ok: 'Delete' })) Store.commit((s) => s.settings.taskTemplates.splice(+a.dataset.id, 1)); });
-act('bk:export', () => Backup.exportJSON(!!($('[data-bk-docs]') || {}).checked));
 act('bk:snap', async () => { await Backup.snapshot('manual'); toast('Snapshot saved'); Router.refresh(); });
 act('bk:restore', (a) => Backup.restoreSnapshot(a.dataset.id));
 act('bk:wipe', () => Backup.wipe());
@@ -4057,89 +4092,6 @@ const CURRENCIES = [
   ['CNY', 'CN¥', 'Chinese Yuan'], ['JPY', '¥', 'Japanese Yen'], ['CHF', 'CHF', 'Swiss Franc'], ['BRL', 'R$', 'Brazilian Real'], ['MXN', 'MX$', 'Mexican Peso']
 ];
 
-/* ---- 20-datafile.js ---- */
-/* ==========================================================================
-   20-datafile.js — Permanent data safety.
-   1. Asks the browser for persistent storage (not cleared automatically).
-   2. Auto-save to a real file on this computer (File System Access API,
-      Chrome / Edge): every change is written to e.g. Documents\<YourCompany>_Data.json.
-      If browser data is ever lost, "Restore data from file" brings it back.
-   Document files (scans/PDFs) stay in the browser; use Export full backup for those.
-   ========================================================================== */
-const DataFile = {
-  handle: null, status: 'off', lastWrite: 0, timer: null, persisted: false,
-  supported() { return typeof window.showSaveFilePicker === 'function' && typeof window.showOpenFilePicker === 'function'; },
-  async init() {
-    try { if (navigator.storage && navigator.storage.persist) this.persisted = await navigator.storage.persist(); } catch (e) { /* ignore */ }
-    if (!this.supported()) { this.status = 'unsupported'; return; }
-    try { this.handle = await IDB.get('kv', 'dataFileHandle'); } catch (e) { this.handle = null; }
-    if (!this.handle) { this.status = 'off'; return; }
-    try { this.status = (await this.handle.queryPermission({ mode: 'readwrite' })) === 'granted' ? 'ok' : 'needs-permission'; } catch (e) { this.status = 'needs-permission'; }
-    this.lastWrite = Number(localStorage.getItem('crm_datafile_last') || 0);
-  },
-  fileTypes: [{ description: 'CRM data file', accept: { 'application/json': ['.json'] } }],
-  async choose() {
-    try {
-      const h = await window.showSaveFilePicker({ suggestedName: (Brand.name() || 'CRM').replace(/[^\w]+/g, '_') + '_Data.json', types: this.fileTypes });
-      this.handle = h; try { await IDB.put('kv', 'dataFileHandle', h); } catch (e) { /* handle could not be stored; auto-save still works this session */ } this.status = 'ok';
-      await this.write(); Auth.audit('edit', 'settings', `Auto-save to file turned on (${h.name})`);
-      toast(`Auto-save is on. Every change is saved to ${h.name}.`); this.refresh();
-    } catch (e) { if (e.name !== 'AbortError') toast('Could not set up the data file: ' + e.message, 'err'); }
-  },
-  async reconnect() {
-    if (!this.handle) return this.choose();
-    try { this.status = (await this.handle.requestPermission({ mode: 'readwrite' })) === 'granted' ? 'ok' : 'needs-permission'; } catch (e) { this.status = 'needs-permission'; }
-    if (this.status === 'ok') { await this.write(); toast('Auto-save reconnected'); }
-    this.refresh();
-  },
-  async stop() {
-    if (!(await confirmDlg('Stop auto-saving to the data file? The file itself is not deleted.', { ok: 'Stop auto-save' }))) return;
-    this.handle = null; this.status = 'off'; await IDB.del('kv', 'dataFileHandle'); Auth.audit('edit', 'settings', 'Auto-save to file turned off'); this.refresh();
-  },
-  schedule() { if (this.status !== 'ok' || !this.handle) return; clearTimeout(this.timer); this.timer = setTimeout(() => this.write(), 1200); },
-  async write() {
-    if (!this.handle || !Store.s) return false;
-    try {
-      const w = await this.handle.createWritable();
-      await w.write(JSON.stringify({ app: Brand.appName(), format: 1, autosave: true, exportedAt: new Date().toISOString(), state: Store.s }));
-      await w.close(); this.lastWrite = Date.now(); localStorage.setItem('crm_datafile_last', String(this.lastWrite)); this.status = 'ok'; return true;
-    } catch (e) { this.status = e.name === 'NotAllowedError' || e.name === 'SecurityError' ? 'needs-permission' : 'error'; this.refresh(); return false; }
-  },
-  /* Load data from an auto-save file or a backup file (works from the sign-in screen too). */
-  async restoreFromFile() {
-    if (!this.supported()) { const i = document.createElement('input'); i.type = 'file'; i.accept = '.json'; i.onchange = () => { if (i.files[0]) Backup.importJSON(i.files[0]); }; i.click(); return; }
-    try {
-      const [h] = await window.showOpenFilePicker({ types: this.fileTypes });
-      const file = await h.getFile();
-      await Backup.importJSON(file);
-      try { if ((await h.requestPermission({ mode: 'readwrite' })) === 'granted') { this.handle = h; try { await IDB.put('kv', 'dataFileHandle', h); } catch (e) { /* ignore */ } this.status = 'ok'; } } catch (e) { /* keep read-only */ }
-    } catch (e) { if (e.name !== 'AbortError') toast('Could not open the file: ' + e.message, 'err'); }
-  },
-  refresh() { if (Auth.user && $('#main')) Router.refresh(); },
-  canManage() { return Auth.user && (Auth.can('settings', 'edit') || (Auth.role() || {}).all); },
-  banner() {
-    if (!Auth.user || !this.canManage()) return '';
-    if (this.status === 'needs-permission') return html`<div class="lic-banner warn">${icon('documents')} Auto-save to <b>${this.handle ? this.handle.name : 'your data file'}</b> is paused. Click to allow saving again. <button type="button" class="btn sm" data-act="df:reconnect">Reconnect auto-save</button></div>`;
-    if (this.status === 'error') return html`<div class="lic-banner err">${icon('documents')} Could not write the auto-save file. <button type="button" class="btn sm" data-act="df:choose">Choose the file again</button></div>`;
-    if (this.status === 'off' && localStorage.getItem('crm_df_hint') !== 'no' && Router.cur.name === 'dashboard') return html`<div class="lic-banner info">${icon('check')} <span><b>Keep your data safe:</b> turn on auto-save to a file on this computer. Every change is saved there too, and you can restore everything from it at any time.</span> <button type="button" class="btn sm primary" data-act="df:choose">Turn on auto-save</button> <button type="button" class="btn sm ghost" data-act="df:hide">Not now</button></div>`;
-    return '';
-  },
-  card(ro) {
-    const st = { ok: ['On', 'green'], off: ['Off', 'grey'], 'needs-permission': ['Paused: needs permission', 'amber'], error: ['Error', 'red'], unsupported: ['Not supported in this browser', 'grey'] }[this.status];
-    return html`<div class="card df-card"><div class="card-h"><h3>Auto-save to a file on this computer</h3>${badge(st[0], st[1])}</div>
-      <p>Saves all your data (clients, tasks, invoices, users, settings…) to a file such as <code>Documents\\YourCompany_Data.json</code> after every change. If the browser's data is ever cleared, use <b>Restore data from file</b> to get everything back.</p>
-      ${this.handle ? html`<p class="sm">File: <b>${this.handle.name}</b>${this.lastWrite ? html` · last saved ${timeAgo(this.lastWrite)}` : ''}</p>` : ''}
-      ${this.status === 'unsupported' ? html`<p class="muted sm">Open this app in Google Chrome or Microsoft Edge to use auto-save.</p>` : ro ? '' : html`<div class="row-acts" style="justify-content:flex-start">${this.status === 'ok' ? html`${btn('Save now', 'df:save', { cls: 'sm primary' })}${btn('Change file', 'df:choose', { cls: 'sm ghost' })}${btn('Stop', 'df:stop', { cls: 'sm ghost' })}` : this.status === 'needs-permission' ? btn('Reconnect auto-save', 'df:reconnect', { cls: 'sm primary' }) : btn('Turn on auto-save', 'df:choose', { cls: 'sm primary' })}${btn('Restore data from file', 'df:restore', { cls: 'sm ghost' })}</div>`}
-      <p class="muted sm mt">${this.persisted ? '✓ The browser has marked this app\'s storage as permanent.' : 'Tip: keep using the same browser and do not clear its "cookies and site data".'} Scanned documents stay in the browser; include them with <b>Export full backup</b>.</p></div>`;
-  }
-};
-act('df:choose', () => DataFile.choose());
-act('df:reconnect', () => DataFile.reconnect());
-act('df:stop', () => DataFile.stop());
-act('df:save', async () => { if (await DataFile.write()) toast('Saved to ' + DataFile.handle.name); });
-act('df:restore', () => DataFile.restoreFromFile());
-act('df:hide', () => { localStorage.setItem('crm_df_hint', 'no'); Router.refresh(); });
-
 /* ---- 21-setup.js ---- */
 /* ==========================================================================
    21-setup.js — First-run Setup Wizard.
@@ -4209,12 +4161,11 @@ const Setup = {
       <div class="auth-side"><div class="auth-card su-card"><h2>${this.steps[this.step][0]}</h2><p class="muted">Step ${this.step + 1} of ${this.steps.length}</p>
         <form id="su-form" novalidate autocomplete="off">${this.body()}
         <div class="su-actions">${this.step > 0 ? html`<button type="button" class="btn ghost" data-su-back>Back</button>` : html`<span></span>`}<button class="btn primary lg" type="submit">${last ? 'Create workspace' : 'Continue'}</button></div></form>
-        ${this.step === 0 ? html`<p class="sm center mt"><a href="#" data-su-restore>Already have a backup file? Restore it</a></p>` : ''}</div></div></div>`);
+        </div></div></div>`);
     App.bindAuthCommon();
     const f = $('#su-form');
     f.onsubmit = (e) => { e.preventDefault(); this.collect(); if (!this.valid()) return; if (last) this.finish(f); else { this.step++; this.render(); } };
     const back = $('[data-su-back]'); if (back) back.onclick = () => { this.collect(); this.step--; this.render(); };
-    const rs = $('[data-su-restore]'); if (rs) rs.onclick = (e) => { e.preventDefault(); DataFile.restoreFromFile(); };
     // live brand preview (step 1)
     if (this.step === 0) {
       f.elements.name.addEventListener('input', () => { this.W.name = f.elements.name.value; this.preview(); });
@@ -4252,13 +4203,142 @@ const Setup = {
     s.settings.setupDone = true; s.settings.setupAt = now;
     s.audit.unshift({ id: uid('a'), at: now, user: 'system', userId: '', action: 'create', module: 'settings', summary: `Setup completed for "${W.name.trim()}"; Super Admin "${admin.username}" created` });
     Store.saveNow();
+    await Cloud.push();
     Theme.save({ skin });
     setFavicon(); document.title = Brand.appName();
     Auth.start(admin); App.enter();
     toast(`Welcome to ${Brand.appName()}! Start by adding your first client.`, 'ok', { timeout: 6000 });
   }
 };
-App.showSetup = function () { Setup.step = 0; Setup.render(); };
+App.showSetup = function () { Setup.step = 0; if (!Setup.W.name) Setup.W.name = (Store.s.settings.company || {}).name || ''; Setup.render(); };
+
+/* ---- 22-cloud.js ---- */
+/* ==========================================================================
+   22-cloud.js — Cloud storage (multi-company).
+   Each company has its own account (company username + password) and private data
+   in the cloud database via /api/sync. This browser keeps a local cache for speed.
+   Employees then sign in inside the company with their own username/password.
+   The password never leaves the browser: only a salted PBKDF2 hash is sent.
+   ========================================================================== */
+const Cloud = {
+  API: '/api/sync',
+  avail: false, status: 'off', timer: null, busy: false, lastSync: 0, adopting: false,
+  st: (() => { try { return JSON.parse(localStorage.getItem('crm_cloud') || '{}'); } catch (e) { return {}; } })(),
+  persist() { try { localStorage.setItem('crm_cloud', JSON.stringify(this.st)); } catch (e) { /* ignore */ } },
+  async call(body) {
+    const r = await fetch(this.API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    let j = {}; try { j = await r.json(); } catch (e) { /* non-JSON */ }
+    if (!r.ok) { const e = new Error(j.error || 'Server error ' + r.status); e.status = r.status; e.data = j; throw e; }
+    return j;
+  },
+  async init() {
+    if (location.protocol === 'file:') { this.avail = false; return; }
+    try { const r = await fetch(this.API, { cache: 'no-store' }); const j = await r.json(); this.avail = !!(j && j.configured); } catch (e) { this.avail = false; }
+    if (!this.avail) return;
+    this.status = this.st.token ? 'ok' : 'off';
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) this.poll(); });
+    setInterval(() => this.poll(), 60000);
+    if (this.st.token) { // refresh from the cloud when the page opens (works offline too: falls back to the local copy)
+      try { const m = await this.call({ action: 'meta', token: this.st.token }); if (m.ws !== this.st.ws || m.ver !== this.st.ver) await this.reconcile(m, m.ws !== this.st.ws); this.status = 'ok'; this.lastSync = Date.now(); }
+      catch (e) { if (e.status === 401) { this.st.token = ''; this.persist(); this.status = 'off'; } else this.status = 'offline'; }
+    }
+  },
+  linked() { return this.avail && !!this.st.token; },
+  company() { return this.st.co || ''; },
+  async idFree(id) { return (await this.call({ action: 'available', id })).free; },
+  async wipeLocal() {
+    clearTimeout(this.timer); this.timer = null;
+    sessionStorage.removeItem('crm_session'); localStorage.removeItem(LS_KEY);
+    try { await IDB.clear('kv'); await IDB.clear('blobs'); await IDB.clear('snapshots'); } catch (e) { /* ignore */ }
+  },
+  /* NEW COMPANY: create the company account in the cloud with an empty workspace. */
+  async signupCompany(id, name, pw) {
+    const salt = Crypto.newSalt(); const hash = await Crypto.hashPassword(pw, salt);
+    await this.wipeLocal();
+    Store.s = Store.blank(); await Seed.ensure(); Store.s.settings.company.name = name;
+    const j = await this.call({ action: 'signup', id, salt, hash, state: Store.s });
+    this.st = { token: j.token, ver: j.ver, ws: j.ws, co: id }; this.persist();
+    this.adopting = true; Store.saveNow(); this.adopting = false; this.status = 'ok'; this.lastSync = Date.now();
+  },
+  /* EXISTING COMPANY: company username + password, then download its data. */
+  async signIn(id, pw) {
+    const { salt } = await this.call({ action: 'challenge', id });
+    const hash = await Crypto.hashPassword(pw, salt);
+    const j = await this.call({ action: 'login', id, hash });
+    const same = this.st.ws === j.ws;
+    if (!same) await this.wipeLocal();
+    this.st = { token: j.token, ver: same ? this.st.ver : 0, ws: j.ws, co: id }; this.persist();
+    await this.reconcile(j, !same);
+  },
+  /* Take the cloud copy when it is newer (or belongs to a different company). */
+  async reconcile(remote, force) {
+    if (!force && Store.s.users.length && this.st.ver === remote.ver) { this.status = 'ok'; return false; }
+    const j = await this.call({ action: 'pull', token: this.st.token });
+    if (!j.state) return false;
+    if (!force && Store.s.users.length) { try { await Backup.snapshot('before-cloud'); } catch (e) { /* ignore */ } }
+    const lic = Store.s.license; Store.s = Object.assign(Store.blank(), j.state); if (lic && !Store.s.license) Store.s.license = lic;
+    this.st.ver = j.ver; this.st.ws = j.ws; this.persist();
+    this.adopting = true; Store.saveNow(); this.adopting = false;
+    await Seed.ensure(); setFavicon(); Theme.apply(); document.title = Brand.appName(); this.status = 'ok'; this.lastSync = Date.now();
+    return true;
+  },
+  async leave() { // switch company: forget this company on this computer
+    await this.wipeLocal(); this.st = {}; try { localStorage.removeItem('crm_cloud'); } catch (e) { /* ignore */ }
+    Store.s = Store.blank(); await Seed.ensure(); Auth.user = null; setFavicon(); document.title = Brand.appName(); App.showGate();
+  },
+  schedule() { if (this.adopting || !this.linked()) return; clearTimeout(this.timer); this.timer = setTimeout(() => { this.timer = null; this.push(); }, 2000); },
+  async push() {
+    if (!this.linked() || this.busy || !Store.s || !Store.s.users.length) return;
+    this.busy = true; this.status = 'syncing';
+    try {
+      const j = await this.call({ action: 'push', token: this.st.token, ver: this.st.ver, state: Store.s });
+      this.st.ver = j.ver; this.persist(); this.status = 'ok'; this.lastSync = Date.now();
+    } catch (e) {
+      if (e.status === 409) await this.conflict(e.data);
+      else if (e.status === 401) { this.st.token = ''; this.persist(); this.status = 'expired'; toast('Company session expired. Please sign in to your company again.', 'warn', { timeout: 8000 }); }
+      else if (e.status === 413) { this.status = 'error'; toast(e.message, 'warn'); }
+      else this.status = 'offline';
+    }
+    this.busy = false; this.refreshChip();
+  },
+  /* Someone else saved first: keep a snapshot of this copy, then take the newer cloud copy. */
+  async conflict(remote) {
+    try {
+      const me = Auth.user ? Auth.user.username : '';
+      await this.reconcile({ ver: remote.ver, savedAt: remote.savedAt }, false);
+      if (me) { Auth.user = Store.s.users.find((u) => u.username === me && u.status === 'active') || null; if (!Auth.user) return Auth.logout('account changed'); }
+      toast('Newer data from another computer was loaded. Your previous copy is kept in Settings › Cloud & Data › Snapshots.', 'warn', { timeout: 8000 });
+      Bus.emit('change', {});
+    } catch (e) { this.status = 'offline'; }
+  },
+  async poll() {
+    if (!this.linked() || this.busy || !Auth.user || Store.saveTimer || this.timer) return;
+    try {
+      const m = await this.call({ action: 'meta', token: this.st.token });
+      if (m.ver !== this.st.ver) {
+        const me = Auth.user.username;
+        if (await this.reconcile(m, false)) { Auth.user = Store.s.users.find((u) => u.username === me && u.status === 'active') || null; if (!Auth.user) return Auth.logout('account changed on another computer'); Bus.emit('change', {}); toast('Updated with the latest data from the cloud.'); }
+      }
+      this.status = 'ok'; this.lastSync = Date.now();
+    } catch (e) { this.status = e.status === 401 ? 'expired' : 'offline'; }
+    this.refreshChip();
+  },
+  /* Document files: kept in the cloud, cached in this browser. */
+  async putBlob(vid, blob) { if (!this.linked()) return; await this.call({ action: 'blob_put', token: this.st.token, vid, type: blob.type || '', data: Crypto.b64(await blob.arrayBuffer()) }); },
+  async getBlob(vid) { if (!this.linked()) return null; const j = await this.call({ action: 'blob_get', token: this.st.token, vid }); return j && j.data ? new Blob([Crypto.unb64(j.data)], { type: j.type || '' }) : null; },
+  delBlob(vid) { if (!this.linked()) return Promise.resolve(); return this.call({ action: 'blob_del', token: this.st.token, vid }); },
+  maxFileMB() { return this.avail ? 3 : 10; },
+  refreshChip() { const c = $('[data-cloud-chip]'); if (c) c.outerHTML = String(this.chip()); },
+  chip() {
+    const m = { ok: ['Saved in cloud', 'green'], syncing: ['Saving…', 'amber'], offline: ['Offline: will save later', 'amber'], expired: ['Sign in to company again', 'red'], error: ['Cloud error', 'red'], off: ['Not connected', 'grey'] }[this.status] || ['Not connected', 'grey'];
+    return html`<span data-cloud-chip>${badge(m[0], m[1])}</span>`;
+  },
+  card() {
+    return html`<div class="card"><div class="card-h"><h3>Cloud storage</h3>${this.chip()}</div><p>All data of <b>${this.company() || 'your company'}</b> is stored safely in the cloud. Open the app from your link on any computer, sign in with the company username and password, then with your own employee login.</p>${this.lastSync ? html`<p class="sm muted">Last synced ${timeAgo(this.lastSync)}</p>` : ''}<div class="row-acts" style="justify-content:flex-start">${btn('Sync now', 'cloud:now', { cls: 'sm primary' })}</div></div>`;
+  }
+};
+act('cloud:now', async () => { Store.saveNow(); await Cloud.push(); toast(Cloud.status === 'ok' ? 'Saved to the cloud' : 'Could not sync right now', Cloud.status === 'ok' ? 'ok' : 'warn'); Router.refresh(); });
+act('cloud:leave', async () => { if (await confirmDlg('Sign out of this company on this computer? Your data stays safe in the cloud.', { ok: 'Sign out of company' })) Cloud.leave(); });
 
 /* ---- 99-boot.js ---- */
 /* ==========================================================================
@@ -4321,8 +4401,8 @@ const Seed = {
   async ensure() {
     const s = Store.s;
     if (!s.users.length) {
-      // Brand-new install: defaults only. The Setup Wizard creates the company profile and the admin user.
-      Object.assign(s, { lists: this.lists(), roles: this.roles(), settings: this.settings(), compliance: [] });
+      // Brand-new company: defaults only. The Setup Wizard creates the company profile and the admin user.
+      if (!s.roles.length) Object.assign(s, { lists: this.lists(), roles: this.roles(), settings: this.settings(), compliance: [] });
       Store.saveNow();
       return;
     }

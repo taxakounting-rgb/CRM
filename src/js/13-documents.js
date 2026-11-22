@@ -6,14 +6,15 @@
    ========================================================================== */
 const Docs = {
   cur(d) { return (d.versions || []).find((v) => v.vid === d.current) || (d.versions || [])[d.versions.length - 1] || {}; },
-  maxMB() { return Number(Store.s.settings.maxUploadMB) || 10; },
+  maxMB() { return Math.min(Number(Store.s.settings.maxUploadMB) || 10, Cloud.maxFileMB()); },
   expiryInfo(d) { if (!d.expiry) return null; const n = daysBetween(today(), d.expiry); return { n, tone: n < 0 ? 'red' : n <= 30 ? 'amber' : 'green', label: n < 0 ? `Expired ${-n}d ago` : n === 0 ? 'Expires today' : `Expires in ${n}d` }; },
   async checkSizes(files) {
     const big = files.filter((f) => f.size > this.maxMB() * 1048576);
+    if (big.length && Cloud.avail) { toast(`Cloud storage accepts files up to ${this.maxMB()} MB. Too large: ${big.map((f) => f.name).join(', ')}`, 'warn', { timeout: 7000 }); return false; }
     if (big.length && !(await confirmDlg(html`${big.length} file(s) are larger than the ${this.maxMB()} MB limit:<br><b>${big.map((f) => `${f.name} (${fmtSize(f.size)})`).join(', ')}</b><br><br>Large files use browser storage quickly. Upload anyway?`, { ok: 'Upload anyway' }))) return false;
     return true;
   },
-  async saveBlob(vid, file) { await IDB.put('blobs', vid, file); },
+  async saveBlob(vid, file) { try { await Cloud.putBlob(vid, file); } catch (e) { toast('Could not save the file to the cloud: ' + e.message, 'err', { timeout: 7000 }); throw e; } await IDB.put('blobs', vid, file); },
   upload(preset = {}) {
     let files = [];
     Modal.open({
@@ -71,7 +72,7 @@ const Docs = {
       foot: html`${Auth.can('documents', 'edit') ? btn('Upload new version', 'doc:version', { id: d.id, icon: 'upload', cls: 'primary' }) : ''}<button type="button" class="btn ghost" data-close>Close</button>`
     });
   },
-  async blob(d, vid) { const b = await IDB.get('blobs', vid || d.current); if (!b) throw new Error('File data not found in this browser.'); return b; },
+  async blob(d, vid) { const id = vid || d.current; let b = await IDB.get('blobs', id); if (!b) { try { b = await Cloud.getBlob(id); } catch (e) { b = null; } if (b) IDB.put('blobs', id, b).catch(() => {}); } if (!b) throw new Error('File not found in the cloud storage.'); return b; },
   async preview(d) {
     const v = this.cur(d); let url = ''; let b;
     try { b = await this.blob(d); url = URL.createObjectURL(b); } catch (e) { toast(e.message, 'err'); return; }
@@ -153,5 +154,5 @@ act('doc:vrestore', async (a) => {
 act('doc:edit', (a) => Docs.edit(docOf(a)));
 act('doc:del', async (a) => {
   const d = docOf(a); if (!(await confirmDlg(`Delete ${d.code} "${d.name}" and all its versions?`, { danger: true, ok: 'Delete' }))) return;
-  Rec.remove('documents', d, `Document ${d.code}`, 'documents', () => setTimeout(() => { if (!Store.s.documents.includes(d)) d.versions.forEach((v) => IDB.del('blobs', v.vid).catch(() => {})); }, 7000));
+  Rec.remove('documents', d, `Document ${d.code}`, 'documents', () => setTimeout(() => { if (!Store.s.documents.includes(d)) d.versions.forEach((v) => { IDB.del('blobs', v.vid).catch(() => {}); Cloud.delBlob(v.vid).catch(() => {}); }); }, 7000));
 });

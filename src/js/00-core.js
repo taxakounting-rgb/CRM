@@ -137,7 +137,7 @@ const Store = {
       if (Date.now() - this.lastWarn > 60000) { this.lastWarn = Date.now(); if (window.toast) toast('Browser storage is full. Data is kept in IndexedDB; please export a backup.', 'warn'); }
     }
     IDB.put('kv', 'state', JSON.parse(json)).catch(() => {});
-    if (typeof DataFile !== 'undefined') DataFile.schedule();
+    if (typeof Cloud !== 'undefined') Cloud.schedule();
   },
   /* Next auto-number from counters with configurable prefix. */
   next(kind) {
