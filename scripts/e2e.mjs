@@ -17,7 +17,7 @@ const ctx = await browser.newContext({ viewport: { width: 1360, height: 860 } })
 const page = await ctx.newPage(); const errors = [];
 page.on('console', (m) => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
 page.on('pageerror', (e) => errors.push('pageerror: ' + e.message));
-await page.goto(url); await page.waitForSelector('[data-gate=signup]'); await page.click('[data-gate=signup]'); await page.waitForSelector('#su-form');
+await page.goto(url); await page.waitForSelector('#su-form');
 
 // ---- Wizard ----
 ok('Setup wizard appears on first run', await page.locator('.su-steps').count());
@@ -130,7 +130,7 @@ await page.evaluate(() => Store.commit((s) => { s.settings.company.name = 'Acme 
 
 // ---- Fresh restore path link & mobile layout ----
 const m = await browser.newContext({ viewport: { width: 390, height: 780 } }); const mp = await m.newPage(); mp.on('pageerror', (e) => errors.push('mobile pageerror: ' + e.message));
-await mp.goto(url); await mp.waitForSelector('[data-gate=signup]'); await mp.click('[data-gate=signup]'); await mp.waitForSelector('#su-form'); await mp.fill('[name=name]', 'Acme Solutions'); await mp.screenshot({ path: join(shots, '13-wizard-mobile.png') });
+await mp.goto(url); await mp.waitForSelector('#su-form'); await mp.fill('[name=name]', 'Acme Solutions'); await mp.screenshot({ path: join(shots, '13-wizard-mobile.png') });
 ok('No horizontal scroll on mobile wizard', await mp.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1));
 await browser.close();
 ok('No console errors during the whole run', !errors.length, errors.slice(0, 3).join(' || '));
