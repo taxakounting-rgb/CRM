@@ -259,7 +259,8 @@ details.diff{font-size:12px;color:var(--muted);margin-top:3px}details.diff summa
   body.printing>*:not(#print-area){display:none!important}
   body.printing #print-area{display:block!important}
   body{background:#fff!important;color:#111!important;font-size:12px}
-  @page{margin:14mm}
+  @page{margin:0;size:auto}
+  body.printing #print-area{padding:14mm!important;box-sizing:border-box}
 }
 #print-area{color:#111;background:#fff;font-family:Arial,Helvetica,sans-serif}
 .p-head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid var(--print-accent,#111);-webkit-print-color-adjust:exact;print-color-adjust:exact;padding-bottom:10px;margin-bottom:14px}
