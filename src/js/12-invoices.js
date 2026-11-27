@@ -3,6 +3,24 @@
    partial payments & receipts, client ledger/statement, aging, expenses,
    net profit. Printable invoice with logo via window.print().
    ========================================================================== */
+/* Payment terms: pick one and the due date is worked out from the invoice date. */
+const PAY_TERMS = [
+  { id: 'receipt', name: 'Due on receipt', days: 0 }, { id: 'net7', name: 'Net 7 days', days: 7 }, { id: 'net10', name: 'Net 10 days', days: 10 }, { id: 'net15', name: 'Net 15 days', days: 15 },
+  { id: 'net30', name: 'Net 30 days', days: 30 }, { id: 'net45', name: 'Net 45 days', days: 45 }, { id: 'net60', name: 'Net 60 days', days: 60 }, { id: 'net90', name: 'Net 90 days', days: 90 },
+  { id: 'eom', name: 'End of this month', eom: 0 }, { id: 'eonm', name: 'End of next month', eom: 1 }, { id: 'custom', name: 'Custom date' }
+];
+const payTerm = (id) => PAY_TERMS.find((t) => t.id === id);
+function payTermsDue(id, date) {
+  const t = payTerm(id); if (!t || !date) return date;
+  if (t.eom !== undefined) { const d = new Date(date + 'T00:00:00'); return isoDate(new Date(d.getFullYear(), d.getMonth() + 1 + t.eom, 0)); }
+  return addDays(date, t.days || 0);
+}
+/* "Due today", "Due in 5 days", "3 days overdue" for unpaid invoices */
+function dueHint(i) {
+  const st = DB.invStatus(i); if (['Draft', 'Cancelled', 'Paid'].includes(st) || !i.due) return '';
+  const d = daysBetween(today(), i.due);
+  return d === 0 ? 'Due today' : d > 0 ? `Due in ${d} day${d === 1 ? '' : 's'}` : `${-d} day${d === -1 ? '' : 's'} overdue`;
+}
 const Invoices = {
   clientLabel(id) { const c = DB.client(id); return c ? `${c.code} · ${c.name}` : ''; },
   /* Searchable client box: filters while typing (name, code, phone, email, company). */
@@ -47,7 +65,8 @@ const Invoices = {
             <div class="cpick-list" data-clist role="listbox" hidden></div>
           </div></div>
         ${fieldHTML({ name: 'date', label: 'Invoice date', type: 'date', required: true }, v.date)}
-        ${fieldHTML({ name: 'due', label: 'Due date', type: 'date', required: true }, v.due)}
+        ${fieldHTML({ name: 'payTerms', label: 'Payment terms', type: 'select', options: PAY_TERMS.map((t) => ({ value: t.id, label: t.name })), required: true }, v.payTerms || (inv ? 'custom' : ((PAY_TERMS.find((t) => t.days === (Number(Store.s.settings.invoiceDueDays) || 15)) || {}).id || 'custom')))}
+        ${fieldHTML({ name: 'due', label: 'Due date', type: 'date', required: true, help: 'Worked out from the payment terms. Choose "Custom date" to pick your own.' }, v.due)}
         ${fieldHTML({ name: 'status', label: 'Status', type: 'select', options: [{ value: 'Draft', label: 'Draft' }, { value: 'Sent', label: 'Sent / Issued' }, { value: 'Cancelled', label: 'Cancelled' }], required: true }, v.status === 'Cancelled' || v.status === 'Draft' ? v.status : 'Sent')}
         <div class="full"><table class="tbl lines"><thead><tr><th>Item</th><th class="num">Qty</th><th class="num">Rate (${curCode()})</th><th class="num">Amount</th><th></th></tr></thead><tbody data-lines>${v.items.map(row)}</tbody></table><button type="button" class="btn sm ghost" data-add>${icon('plus')}<span>Add line</span></button></div>
         ${fieldHTML({ name: 'discount', label: `Discount (${curCode()})`, type: 'money', min: 0 }, v.discount)}
@@ -73,12 +92,15 @@ const Invoices = {
         tb.addEventListener('click', (e) => { if (e.target.closest('[data-rm]')) { if ($$('tr', tb).length > 1) e.target.closest('tr').remove(); recalc(); } });
         el.querySelector('[data-add]').onclick = () => { tb.insertAdjacentHTML('beforeend', String(row({ desc: '', service: '', qty: 1, rate: 0 }, $$('tr', tb).length))); };
         form.addEventListener('input', recalc); recalc(); bindFormExtras(form);
+        // Payment terms -> due date (Custom date = pick it yourself)
+        const syncDue = () => { const id = form.payTerms.value; const custom = id === 'custom' || !id; form.due.readOnly = !custom; form.due.style.opacity = custom ? '' : '.75'; if (!custom && form.date.value) form.due.value = payTermsDue(id, form.date.value); };
+        form.payTerms.addEventListener('change', syncDue); form.date.addEventListener('input', syncDue); form.date.addEventListener('change', syncDue); syncDue();
         // Choosing a template fills the editable terms text
         const tcSel = el.querySelector('[data-tc]'); const tcTxt = el.querySelector('[data-tc-text]');
         if (tcSel && tcTxt) tcSel.addEventListener('change', () => { const t = (Store.s.settings.tcTemplates || []).find(x => x.id === tcSel.value); tcTxt.value = t ? t.text : ''; });
         el.querySelector('[data-save]').onclick = () => {
           const items = read().filter((i) => i.desc || i.service || i.rate);
-          const vals = { clientId: form.clientId.value, date: form.date.value, due: form.due.value, status: form.status.value, discount: Number(form.discount.value) || 0, taxPct: Number(form.taxPct.value) || 0, notes: form.notes.value.trim(), tcTemplateId: (el.querySelector('[data-tc]') || {}).value || '', tcText: (el.querySelector('[data-tc-text]') || {}).value.trim(), items: items.map((i) => Object.assign(i, { desc: i.desc || Lists.name('services', i.service) })) };
+          const vals = { clientId: form.clientId.value, date: form.date.value, due: form.due.value, payTerms: form.payTerms.value, status: form.status.value, discount: Number(form.discount.value) || 0, taxPct: Number(form.taxPct.value) || 0, notes: form.notes.value.trim(), tcTemplateId: (el.querySelector('[data-tc]') || {}).value || '', tcText: (el.querySelector('[data-tc-text]') || {}).value.trim(), items: items.map((i) => Object.assign(i, { desc: i.desc || Lists.name('services', i.service) })) };
           const err = !vals.clientId ? 'Choose a client.' : !items.length ? 'Add at least one line item.' : vals.due < vals.date ? 'Due date is before the invoice date.' : !Auth.canSeeClient(vals.clientId) ? 'Choose one of your clients.' : '';
           if (err) { el.querySelector('[data-e]').textContent = err; return; }
           const c = DB.client(vals.clientId);
@@ -164,7 +186,7 @@ const Invoices = {
         { key: 'number', label: 'Invoice', render: (i) => html`<a class="code" href="#/invoices/${i.number}">${i.number}</a>` },
         { key: 'client', label: 'Client', get: (i) => (DB.client(i.clientId) || {}).name, render: (i) => { const c = DB.client(i.clientId); return c ? html`<a href="#/clients/${c.code}">${c.name}</a><br><small class="code">${c.code}</small>` : '—'; } },
         { key: 'date', label: 'Date', render: (i) => fmtDate(i.date) },
-        { key: 'due', label: 'Due', render: (i) => fmtDate(i.due) },
+        { key: 'due', label: 'Due', get: (i) => i.due, render: (i) => html`${fmtDate(i.due)}${dueHint(i) ? html`<br><small class="${DB.invStatus(i) === 'Overdue' ? 'late-txt' : 'muted'}">${dueHint(i)}</small>` : ''}` },
         { key: 'total', label: 'Total', cls: 'num', get: (i) => DB.invTotal(i).total, render: (i) => money(DB.invTotal(i).total) },
         { key: 'paid', label: 'Paid', cls: 'num', get: (i) => DB.invPaid(i), render: (i) => money(DB.invPaid(i)) },
         { key: 'status', label: 'Status', get: (i) => DB.invStatus(i), render: (i) => badge(DB.invStatus(i), statusTone(DB.invStatus(i))) },
@@ -221,7 +243,7 @@ const Invoices = {
             <tr><td>Invoice No.</td><td><b>${inv.number}</b></td></tr>
             <tr><td>Customer Code</td><td>${c.code || ''}</td></tr>
             <tr><td>Invoice Date</td><td>${fmtDate(inv.date)}</td></tr>
-            <tr><td>Due Date</td><td><b>${fmtDate(inv.due)}</b></td></tr>
+            <tr><td>Due Date</td><td><b>${fmtDate(inv.due)}</b>${inv.payTerms && inv.payTerms !== 'custom' ? html`<br><small>${(payTerm(inv.payTerms) || {}).name}</small>` : ''}</td></tr>
             <tr><td>Status</td><td><b>${st}</b></td></tr>
           </table>
         </div>
@@ -307,7 +329,7 @@ Views.invoices = {
     const c = DB.client(inv.clientId) || {}; const t = DB.invTotal(inv); const st = DB.invStatus(inv); const pays = Store.s.payments.filter((p) => p.invoiceId === inv.id);
     const canEdit = Auth.can('invoices', 'edit');
     return html`<div class="crumbs"><a href="#/invoices">Invoices</a> › ${inv.number}</div>
-      <div class="card"><div class="row-between wrap"><div><h1>${inv.number} ${badge(st, statusTone(st))}</h1><p class="muted"><a href="#/clients/${c.code}">${c.code} · ${c.name}</a> · issued ${fmtDate(inv.date)} · due ${fmtDate(inv.due)}</p></div>
+      <div class="card"><div class="row-between wrap"><div><h1>${inv.number} ${badge(st, statusTone(st))}</h1><p class="muted"><a href="#/clients/${c.code}">${c.code} · ${c.name}</a> · issued ${fmtDate(inv.date)} · due ${fmtDate(inv.due)}${inv.payTerms && inv.payTerms !== 'custom' ? ` (${(payTerm(inv.payTerms) || {}).name})` : ''}${dueHint(inv) ? ` · ${dueHint(inv)}` : ''}</p></div>
       <div class="row-acts">${canEdit && DB.invBalance(inv) > 0 && st !== 'Cancelled' ? btn('Record payment', 'inv:pay', { id: inv.id, cls: 'primary', icon: 'invoices' }) : ''}${canEdit && inv.status === 'Draft' ? btn('Mark as sent', 'inv:sent', { id: inv.id, cls: 'ghost' }) : ''}${btn('Print / PDF', 'inv:print', { id: inv.id, icon: 'print', cls: 'ghost' })}${btn('Email', 'inv:email', { id: inv.id, icon: 'mail', cls: 'ghost' })}${btn('Reminder', 'inv:wa', { id: inv.id, icon: 'wa', cls: 'wa' })}${canEdit ? btn('Edit', 'inv:edit', { id: inv.id, icon: 'edit', cls: 'ghost' }) : ''}${Auth.can('invoices', 'delete') ? btn('', 'inv:del', { id: inv.id, icon: 'trash', cls: 'icon-btn danger-txt', title: 'Delete invoice' }) : ''}</div></div></div>
       <div class="grid-31"><div class="card"><table class="tbl"><thead><tr><th>#</th><th>Description</th><th class="num">Qty</th><th class="num">Rate</th><th class="num">Amount</th></tr></thead><tbody>${inv.items.map((it, i) => html`<tr><td>${i + 1}</td><td>${it.desc}</td><td class="num">${it.qty}</td><td class="num">${money(it.rate)}</td><td class="num">${money(it.qty * it.rate)}</td></tr>`)}</tbody></table>
         <div class="totals"><div>Subtotal <b>${money(t.sub)}</b></div><div>Discount <b>− ${money(t.disc)}</b></div><div>Tax (${inv.taxPct || 0}%) <b>${money(t.tax)}</b></div><div class="grand">Total <b>${money(t.total)}</b></div><div>Paid <b>${money(DB.invPaid(inv))}</b></div></div>${inv.notes ? html`<p class="muted">${inv.notes}</p>` : ''}</div>
