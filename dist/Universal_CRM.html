@@ -262,11 +262,11 @@ details.diff{font-size:12px;color:var(--muted);margin-top:3px}details.diff summa
   @page{margin:14mm}
 }
 #print-area{color:#111;background:#fff;font-family:Arial,Helvetica,sans-serif}
-.p-head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #D62828;padding-bottom:10px;margin-bottom:14px}
+.p-head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid var(--print-accent,#111);-webkit-print-color-adjust:exact;print-color-adjust:exact;padding-bottom:10px;margin-bottom:14px}
 .p-logo{width:150px;height:auto;color:#111}.p-head img.p-logo{max-height:110px;object-fit:contain}.p-co{text-align:right;font-size:12px;line-height:1.5}.p-title{font-size:20px;margin:6px 0;letter-spacing:.05em}.p-sub{color:#555;font-size:11.5px}
-.ptbl{width:100%;border-collapse:collapse;margin:10px 0 16px;font-size:12px}.ptbl th{background:#111;color:#fff;text-align:left;padding:6px 8px;-webkit-print-color-adjust:exact;print-color-adjust:exact}.ptbl td{padding:6px 8px;border-bottom:1px solid #ddd}.ptbl .num{text-align:right}.ptbl.small{font-size:10px}
-.ptot{margin-left:auto;border-collapse:collapse;min-width:280px;font-size:13px}.ptot td{padding:5px 8px}.ptot td:last-child{text-align:right}.ptot tr.g td{font-weight:700;border-top:2px solid #111}
-.inv-meta{display:flex;justify-content:space-between;gap:20px;margin:10px 0 6px}.inv-meta small{display:block;color:#D62828;font-weight:700;letter-spacing:.08em}.meta-t td{padding:2px 6px}
+.ptbl{width:100%;border-collapse:collapse;margin:10px 0 16px;font-size:12px}.ptbl th{background:var(--print-accent,#111);color:var(--print-on,#fff);text-align:left;padding:6px 8px;-webkit-print-color-adjust:exact;print-color-adjust:exact}.ptbl td{padding:6px 8px;border-bottom:1px solid #ddd}.ptbl .num{text-align:right}.ptbl.small{font-size:10px}
+.ptot{margin-left:auto;border-collapse:collapse;min-width:280px;font-size:13px}.ptot td{padding:5px 8px}.ptot td:last-child{text-align:right}.ptot tr.g td{font-weight:700;border-top:2px solid var(--print-accent,#111)}
+.inv-meta{display:flex;justify-content:space-between;gap:20px;margin:10px 0 6px}.inv-meta small{display:block;color:var(--print-accent,#111);font-weight:700;letter-spacing:.08em}.meta-t td{padding:2px 6px}
 .p-terms{font-size:11px;color:#444;border-top:1px solid #ddd;padding-top:8px;margin-top:10px;white-space:pre-wrap}.p-foot{text-align:center;font-size:10.5px;color:#666;margin-top:24px;border-top:1px solid #ddd;padding-top:8px}
 .p-sign{margin:50px 0 0 auto;width:220px;border-top:1px solid #111;text-align:center;padding-top:4px;font-size:11px}
 #print-area .kv{grid-template-columns:180px 1fr}#print-area .kv dt{color:#555}#print-area .badge{background:#eee;color:#111}
@@ -389,27 +389,29 @@ input[type=color]{height:38px;min-width:56px;padding:3px;cursor:pointer}
 
 /* ======================= INVOICE PRINT (improved) ======================= */
 .inv-bill-to{font-size:12.5px;line-height:1.6}
-.inv-label{font-size:9px;font-weight:800;letter-spacing:.12em;color:#c0392b;margin-bottom:3px}
+.inv-label{font-size:9px;font-weight:800;letter-spacing:.12em;color:var(--print-accent,#111);margin-bottom:3px}
 .inv-client-name{font-size:15px;font-weight:700;margin-bottom:2px}
 .inv-addr{color:#555;font-size:11.5px}
 .inv-details-box{min-width:220px}
 .inv-detail-t td{padding:4px 8px;font-size:12px;border-bottom:1px dotted #e5e5e5}
 .inv-detail-t td:first-child{color:#666;white-space:nowrap}
 .inv-detail-t td:last-child{text-align:right;font-weight:500}
-.inv-balance-row td{background:#fef3c7;font-weight:800!important;color:#92400e!important}
-.inv-items thead tr{background:#1a1a2e;color:#fff}
+.inv-items thead tr{background:var(--print-accent,#1a1a2e);color:var(--print-on,#fff);-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .inv-items thead th{padding:8px 10px!important;font-size:11.5px;letter-spacing:.04em}
 .inv-items tbody tr:nth-child(even){background:#f9f9f9}
 .inv-bottom{display:flex;justify-content:space-between;gap:20px;margin:16px 0}
-.inv-notes-box{flex:1;font-size:12px;color:#555;padding:12px;background:#f8f8f8;border-radius:6px;border-left:3px solid #1a1a2e;white-space:pre-line}
+.inv-notes-box{flex:1;font-size:12px;color:#555;padding:12px;background:#f8f8f8;border-radius:6px;border-left:3px solid var(--print-accent,#1a1a2e);white-space:pre-line}
 .inv-totals{min-width:260px}.inv-totals td{padding:6px 10px}
-.inv-totals .total-row td{background:#1a1a2e;color:#fff;font-size:14px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-.inv-totals .balance-row td{background:#c0392b;color:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.inv-totals .total-row td{background:var(--print-accent,#1a1a2e);color:var(--print-on,#fff);font-size:14px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .inv-totals .paid-row td{background:#e8f5e9;color:#1b5e20!important;font-weight:700}
-.inv-totals .disc{color:#c0392b}
+.inv-totals .disc{color:#555}
 .inv-payments{margin:12px 0;font-size:12px}.inv-payments b{display:block;margin-bottom:6px;font-size:12.5px}
-.inv-sign-row{display:flex;justify-content:space-between;margin:40px 0 16px;gap:40px}
-.inv-sign-box{flex:1;text-align:center}.inv-sign-line{border-top:1px solid #333;margin-bottom:6px}.inv-sign-box small{font-size:10.5px;color:#666}
+/* Credentials vault: typed credentials */
+.vsec{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:1px 0}.vsec>small{min-width:96px;font-size:11px}.vsec.nw{flex-wrap:nowrap}.vsec.nw .cd{white-space:nowrap}
+.ct-list{display:grid;gap:8px}.ct-item{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px}
+.ct-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}.ct-chip{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:2px 8px;border-radius:99px;background:var(--brand-soft)}.ct-chip svg{width:11px;height:11px}
+.ct-row{display:grid;grid-template-columns:1fr 170px auto auto;gap:8px;align-items:center;margin-bottom:8px}
+@media(max-width:640px){.ct-row{grid-template-columns:1fr 1fr}}
 
 </style>
 </head>
@@ -426,7 +428,7 @@ input[type=color]{height:38px;min-width:56px;padding:3px;cursor:pointer}
 
 /* ---------- Small utilities ---------- */
 const $ = (s, r = document) => r.querySelector(s);
-const $ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
 const uid = (p = '') => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 const clone = (o) => JSON.parse(JSON.stringify(o));
 const debounce = (fn, ms = 250) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
@@ -471,11 +473,7 @@ function timeAgo(d) {
   return fmtDate(d);
 }
 const numFmt = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 });
-const curInfo = () => { const c = (typeof Store !== 'undefined' && Store.s && Store.s.settings && Store.s.settings.currency) || {}; return { code: c.code || 'USD', symbol: c.symbol || '
-</script>
-</body>
-</html>
- }; };
+const curInfo = () => { const c = (typeof Store !== 'undefined' && Store.s && Store.s.settings && Store.s.settings.currency) || {}; return { code: c.code || 'USD', symbol: c.symbol || '$' }; };
 const curCode = () => curInfo().code;
 const curSym = (s = curInfo().symbol) => (/^[A-Za-z]/.test(s) ? s + ' ' : s);
 const money = (n) => { n = Math.round(Number(n) || 0); return (n < 0 ? '-' : '') + curSym() + numFmt.format(Math.abs(n)); };
@@ -1121,7 +1119,7 @@ function readForm(form, fields) {
   const out = {};
   fields.forEach((f) => {
     if (!f.name || f.type === 'section' || f.type === 'html') return;
-    if (f.type === 'multi') { out[f.name] = $(`[data-multi="${f.name}"] input:checked`, form).map((i) => i.value); return; }
+    if (f.type === 'multi') { out[f.name] = $$(`[data-multi="${f.name}"] input:checked`, form).map((i) => i.value); return; }
     const el = form.elements[f.name]; if (!el) return;
     if (f.type === 'checkbox') out[f.name] = el.checked;
     else if (f.type === 'number' || f.type === 'money') out[f.name] = el.value === '' ? '' : Number(el.value);
@@ -1142,7 +1140,7 @@ function validateForm(vals, fields) {
   return errs;
 }
 function showErrors(form, errs) {
-  $('[data-err-for]', form).forEach((e) => { e.textContent = ''; e.closest('.fld') && e.closest('.fld').classList.remove('bad'); });
+  $$('[data-err-for]', form).forEach((e) => { e.textContent = ''; e.closest('.fld') && e.closest('.fld').classList.remove('bad'); });
   Object.entries(errs).forEach(([k, m]) => { const e = form.querySelector(`[data-err-for="${k}"]`); if (e) { e.textContent = m; e.closest('.fld') && e.closest('.fld').classList.add('bad'); } });
   const first = Object.keys(errs)[0]; if (first) { const el = form.elements[first] || form.querySelector(`[data-multi="${first}"]`); if (el && el.focus) el.focus(); }
 }
@@ -1172,13 +1170,13 @@ function formModal({ title, fields, values = {}, submit = 'Save', onSubmit, size
 }
 /* Image pickers + "add new master list value" inside forms */
 function bindFormExtras(form) {
-  $('[data-img]', form).forEach((inp) => inp.addEventListener('change', async () => {
+  $$('[data-img]', form).forEach((inp) => inp.addEventListener('change', async () => {
     const f = inp.files[0]; if (!f) return; if (f.size > 2 * 1048576) { toast('Image must be under 2 MB', 'warn'); return; }
     const url = await resizeImage(f, 320); const n = inp.dataset.img;
     form.elements[n].value = url; const p = form.querySelector(`[data-img-prev="${n}"]`); p.src = url; p.hidden = false;
   }));
-  $('[data-img-clear]', form).forEach((b) => b.addEventListener('click', () => { const n = b.dataset.imgClear; form.elements[n].value = ''; const p = form.querySelector(`[data-img-prev="${n}"]`); p.hidden = true; }));
-  $('select[data-list]', form).forEach((sel) => {
+  $$('[data-img-clear]', form).forEach((b) => b.addEventListener('click', () => { const n = b.dataset.imgClear; form.elements[n].value = ''; const p = form.querySelector(`[data-img-prev="${n}"]`); p.hidden = true; }));
+  $$('select[data-list]', form).forEach((sel) => {
     let prev = sel.value;
     sel.addEventListener('change', async () => {
       if (sel.value !== '__add__') { prev = sel.value; return; }
@@ -1270,7 +1268,7 @@ const Charts = {
   ro: null,
   hydrate(root = document) {
     if (!this.ro && window.ResizeObserver) this.ro = new ResizeObserver((ents) => ents.forEach((e) => this.drawBox(e.target)));
-    $('.chart-box[data-chart]', root).forEach((b) => { this.drawBox(b); if (this.ro) this.ro.observe(b); });
+    $$('.chart-box[data-chart]', root).forEach((b) => { this.drawBox(b); if (this.ro) this.ro.observe(b); });
   },
   drawBox(b) { const r = this._reg[b.dataset.chart]; const w = b.clientWidth; if (!r || !w || b._w === w) return; b._w = w; b.innerHTML = this.barsSVG(r.data, w, r.opts); },
   /* Donut with legend. data: [{label, value, color}] */
@@ -1337,7 +1335,7 @@ act('tbl:sort', (a) => { const st = tstate(a.dataset.key); if (st.sort === a.dat
 act('tbl:page', (a) => { tstate(a.dataset.key).page = Number(a.dataset.p); Router.refresh(); const m = $('#main'); if (m) m.scrollTop = 0; });
 act('tbl:size', (a) => { const st = tstate(a.dataset.key); st.size = Number(a.value); st.page = 1; Router.refresh(); });
 act('tbl:sel', (a) => { const st = tstate(a.dataset.key); if (a.checked) st.sel.add(a.dataset.id); else st.sel.delete(a.dataset.id); Router.refresh(); });
-act('tbl:selall', (a) => { const st = tstate(a.dataset.key); $(`[data-act="tbl:sel"][data-key="${a.dataset.key}"]`).forEach((c) => { if (a.checked) st.sel.add(c.dataset.id); else st.sel.delete(c.dataset.id); }); Router.refresh(); });
+act('tbl:selall', (a) => { const st = tstate(a.dataset.key); $$(`[data-act="tbl:sel"][data-key="${a.dataset.key}"]`).forEach((c) => { if (a.checked) st.sel.add(c.dataset.id); else st.sel.delete(c.dataset.id); }); Router.refresh(); });
 act('sf:save', async (a) => {
   const k = a.dataset.id; const name = await promptDlg('Save filter', 'Filter name'); if (!name) return;
   Store.commit((s) => s.savedFilters.push({ id: uid('sf'), view: k, userId: Auth.user.id, name, state: clone(vs(k)) }), { allowRO: true });
@@ -1356,11 +1354,19 @@ function downloadFile(name, content, type = 'text/plain') {
 function toCSV(headers, rows) { const q = (v) => { v = v === null || v === undefined ? '' : String(v); if (/^[=+\-@]/.test(v)) v = "'" + v; return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }; return '﻿' + [headers.map(q).join(','), ...rows.map((r) => r.map(q).join(','))].join('\r\n'); }
 function toXLS(title, headers, rows) { return `<html xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="UTF-8"></head><body><table border="1"><caption>${esc(title)}</caption><tr>${headers.map((h) => `<th style="background:#111;color:#fff">${esc(h)}</th>`).join('')}</tr>${rows.map((r) => `<tr>${r.map((c) => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</table></body></html>`; }
 function printHTML(title, bodyHTML) {
-  const area = $('#print-area'); area.innerHTML = String(bodyHTML); document.title = title;
-  document.body.classList.add('printing');
-  const done = () => { document.body.classList.remove('printing'); area.innerHTML = ''; document.title = Brand.appName(); window.removeEventListener('afterprint', done); };
-  window.addEventListener('afterprint', done);
-  setTimeout(() => { window.print(); setTimeout(() => { if (document.body.classList.contains('printing') && !window.matchMedia('print').matches) done(); }, 1500); }, 60);
+  const area = $('#print-area');
+  const go = () => {
+    const acc = Brand.printColor();
+    area.style.setProperty('--print-accent', acc);
+    area.style.setProperty('--print-on', (typeof Theme !== 'undefined' && Theme.onColor) ? Theme.onColor(acc) : '#ffffff');
+    area.innerHTML = String(bodyHTML); document.title = title;
+    document.body.classList.add('printing');
+    const done = () => { document.body.classList.remove('printing'); area.innerHTML = ''; document.title = Brand.appName(); window.removeEventListener('afterprint', done); };
+    window.addEventListener('afterprint', done);
+    setTimeout(() => { window.print(); setTimeout(() => { if (document.body.classList.contains('printing') && !window.matchMedia('print').matches) done(); }, 1500); }, 60);
+  };
+  const co = Brand.company();
+  if (co.logo && co.logoColor === undefined) Brand.syncLogoColor().then(go, go); else go();
 }
 function printFooter() { const c = Store.s.settings.company || {}; return [c.name, c.phone, c.website].filter(Boolean).join('  |  '); }
 function printHeader(title, sub = '') {
@@ -1575,7 +1581,7 @@ const App = {
       </form>`;
     $('#app').innerHTML = String(this.authFrame(html`${tabs}${tab === 'register' && allowReg ? register : signin}`));
     this.bindAuthCommon();
-    $('[data-auth-tab]').forEach((b) => b.onclick = () => this.showLogin(b.dataset.authTab));
+    $$('[data-auth-tab]').forEach((b) => b.onclick = () => this.showLogin(b.dataset.authTab));
     const lf = $('#login-form');
     if (lf) {
       lf.onsubmit = async (e) => {
@@ -1611,10 +1617,10 @@ const App = {
     };
   },
   bindAuthCommon() {
-    $('[data-pw-eye]').forEach((b) => b.onclick = () => { const i = b.parentElement.querySelector('input'); i.type = i.type === 'password' ? 'text' : 'password'; b.setAttribute('aria-label', i.type === 'password' ? 'Show password' : 'Hide password'); b.classList.toggle('on', i.type === 'text'); });
-    $('input[type=password]').forEach((i) => i.addEventListener('keyup', (e) => { const c = $('[data-caps]'); if (c && e.getModifierState) c.hidden = !e.getModifierState('CapsLock'); }));
-    $('[data-strength]').forEach((i) => i.addEventListener('input', () => { const m = i.closest('.fld').querySelector('[data-meter]'); const s = Auth.strength(i.value); m.dataset.s = s; m.title = ['Too weak', 'Weak', 'Fair', 'Good', 'Strong'][s]; }));
-    $('[data-theme-toggle]').forEach((b) => b.onclick = () => { Theme.toggle(); const t = $('.theme-mini'); if (t) t.innerHTML = String(html`${icon(Theme.dark() ? 'sun' : 'moon')}<span>${Theme.dark() ? 'Light' : 'Dark'} mode</span>`); });
+    $$('[data-pw-eye]').forEach((b) => b.onclick = () => { const i = b.parentElement.querySelector('input'); i.type = i.type === 'password' ? 'text' : 'password'; b.setAttribute('aria-label', i.type === 'password' ? 'Show password' : 'Hide password'); b.classList.toggle('on', i.type === 'text'); });
+    $$('input[type=password]').forEach((i) => i.addEventListener('keyup', (e) => { const c = $('[data-caps]'); if (c && e.getModifierState) c.hidden = !e.getModifierState('CapsLock'); }));
+    $$('[data-strength]').forEach((i) => i.addEventListener('input', () => { const m = i.closest('.fld').querySelector('[data-meter]'); const s = Auth.strength(i.value); m.dataset.s = s; m.title = ['Too weak', 'Weak', 'Fair', 'Good', 'Strong'][s]; }));
+    $$('[data-theme-toggle]').forEach((b) => b.onclick = () => { Theme.toggle(); const t = $('.theme-mini'); if (t) t.innerHTML = String(html`${icon(Theme.dark() ? 'sun' : 'moon')}<span>${Theme.dark() ? 'Light' : 'Dark'} mode</span>`); });
   },
   afterPassword(u, next) {
     if (next === '2fa') return this.show2FA(u);
@@ -2039,7 +2045,7 @@ act('client:import', () => {
         targets.forEach(([k, l]) => { const i = head.findIndex((h) => norm(h) === norm(k) || norm(h) === norm(l) || (k === 'name' && norm(h) === 'clientname') || (k === 'father' && norm(h).startsWith('father')) || (k === 'assignedTo' && norm(h).includes('officer'))); map[k] = i >= 0 ? String(i) : ''; });
         const s2 = el.querySelector('[data-step2]'); s2.hidden = false;
         s2.innerHTML = String(html`<h4>Map columns (${rows.length} rows found)</h4><div class="map-grid">${targets.map(([k, l]) => html`<label class="fld"><span>${l}</span><select data-map="${k}"><option value="">— skip —</option>${head.map((h, i) => html`<option value="${i}" ${map[k] === String(i) ? raw('selected') : ''}>${h}</option>`)}</select></label>`)}</div><div data-prev></div>`);
-        $('[data-map]', s2).forEach((s) => s.onchange = () => { map[s.dataset.map] = s.value; preview(); });
+        $$('[data-map]', s2).forEach((s) => s.onchange = () => { map[s.dataset.map] = s.value; preview(); });
         preview();
       };
       el.querySelector('[data-go]').onclick = () => {
@@ -2122,7 +2128,7 @@ const Client360 = {
   },
   mount(root) {
     const f = root.querySelector('[data-note-form]'); if (!f) return;
-    $('[data-mention]', f).forEach((b) => b.onclick = () => { const t = f.text; t.value += (t.value && !t.value.endsWith(' ') ? ' ' : '') + '@' + b.dataset.mention + ' '; t.focus(); });
+    $$('[data-mention]', f).forEach((b) => b.onclick = () => { const t = f.text; t.value += (t.value && !t.value.endsWith(' ') ? ' ' : '') + '@' + b.dataset.mention + ' '; t.focus(); });
     f.onsubmit = (e) => {
       e.preventDefault(); const text = f.text.value.trim(); if (!text) return;
       const clientId = f.dataset.noteForm; const c = DB.client(clientId);
@@ -2170,10 +2176,36 @@ act('fu:snooze', (a) => {
 });
 
 /* ==========================================================================
-   07-vault.js — IRIS & portal credential vault. Passwords are AES-GCM encrypted
-   with a key derived (PBKDF2, 250k iterations, per-vault salt) from the Vault PIN.
-   Reveal/copy require the PIN every time, auto-hide after 15 s, audit-logged.
+   07-vault.js — Credentials Vault. Every service can have its own credential
+   TYPE (e.g. Taxation: User ID / Email + Password + PIN; Digital Marketing:
+   Platform, Login, Password, 2FA code ...). Types and their fields are data
+   (Credentials Vault > Credential types), not code. Secret fields (password /
+   PIN) are AES-GCM encrypted with a key derived (PBKDF2, 250k iterations,
+   per-vault salt) from the Vault PIN. Reveal/copy require the PIN every time,
+   auto-hide after 15 s, audit-logged.
    ========================================================================== */
+const CRED_KINDS = { text: 'Text', email: 'Email', url: 'Link / URL', secret: 'Password (encrypted)', pin: 'PIN (encrypted)' };
+const isSecretKind = (k) => k === 'secret' || k === 'pin';
+/* Starter types. Fully editable / deletable by the owner. */
+const DEFAULT_CRED_TYPES = [
+  { id: 'ct_tax', name: 'Tax / Government Portal', service: '', url: '', fields: [
+    { id: 'f1', label: 'User ID / Email', kind: 'text', required: true }, { id: 'f2', label: 'Password', kind: 'secret', required: true }, { id: 'f3', label: 'PIN', kind: 'pin', required: false } ] },
+  { id: 'ct_social', name: 'Social Media', service: '', url: '', fields: [
+    { id: 'f1', label: 'Platform / Page name', kind: 'text', required: true }, { id: 'f2', label: 'Username / Email', kind: 'text', required: true }, { id: 'f3', label: 'Password', kind: 'secret', required: true }, { id: 'f4', label: '2FA / Backup code', kind: 'secret', required: false } ] },
+  { id: 'ct_ads', name: 'Ads Account (Google / Meta / TikTok)', service: '', url: '', fields: [
+    { id: 'f1', label: 'Ad account ID', kind: 'text', required: false }, { id: 'f2', label: 'Login email', kind: 'email', required: true }, { id: 'f3', label: 'Password', kind: 'secret', required: true }, { id: 'f4', label: '2FA / Backup code', kind: 'secret', required: false } ] },
+  { id: 'ct_web', name: 'Website / Hosting', service: '', url: '', fields: [
+    { id: 'f1', label: 'Panel / Login URL', kind: 'url', required: false }, { id: 'f2', label: 'Username', kind: 'text', required: true }, { id: 'f3', label: 'Password', kind: 'secret', required: true } ] },
+  { id: 'ct_email', name: 'Email Account', service: '', url: '', fields: [
+    { id: 'f1', label: 'Email address', kind: 'email', required: true }, { id: 'f2', label: 'Password', kind: 'secret', required: true }, { id: 'f3', label: 'Recovery email / phone', kind: 'text', required: false } ] },
+  { id: 'ct_bank', name: 'Bank Portal', service: '', url: '', fields: [
+    { id: 'f1', label: 'User ID', kind: 'text', required: true }, { id: 'f2', label: 'Password', kind: 'secret', required: true }, { id: 'f3', label: 'PIN / MPIN', kind: 'pin', required: false } ] },
+  { id: 'ct_login', name: 'General Login', service: '', url: '', fields: [
+    { id: 'f1', label: 'Username / Login ID', kind: 'text', required: true }, { id: 'f2', label: 'Password', kind: 'secret', required: true } ] }
+];
+/* Old (pre-types) credentials carried a Portal list value; map them to a starter type. */
+const LEGACY_PORTAL_TYPE = { 'email account': 'ct_email', 'website / hosting': 'ct_web', 'bank portal': 'ct_bank', 'social media': 'ct_social', 'government portal': 'ct_tax' };
+
 const Vault = {
   ITER: 250000,
   timers: {},
@@ -2225,88 +2257,216 @@ const Vault = {
       fields: [{ name: 'p1', label: 'New Vault PIN', type: 'password', required: true, validate: (v) => v.length < 6 ? 'Use at least 6 characters' : '' }, { name: 'p2', label: 'Confirm new PIN', type: 'password', required: true, validate: (v, all) => v !== all.p1 ? 'PINs do not match' : '' }],
       onSubmit: async (v) => {
         const salt = Crypto.newSalt(); const nk = await Crypto.deriveVaultKey(v.p1, salt, this.ITER);
+        const jobs = [];
+        for (const c of Store.s.creds) {
+          if (c.secret) jobs.push([c, 'secret', c.secret]);
+          if (c.extra) jobs.push([c, 'extra', c.extra]);
+          Object.entries(c.secrets || {}).forEach(([k, b]) => jobs.push([c, 's:' + k, b]));
+        }
         const out = [];
-        for (const c of Store.s.creds) out.push([c, await Crypto.encrypt(nk, await Crypto.decrypt(oldKey, c.secret))]);
+        for (const [c, slot, b] of jobs) out.push([c, slot, await Crypto.encrypt(nk, await Crypto.decrypt(oldKey, b))]);
         const check = await Crypto.encrypt(nk, 'TAK-VAULT-OK');
-        Store.commit((s) => { out.forEach(([c, sec]) => { c.secret = sec; }); s.settings.vault = { salt, iter: this.ITER, check, createdAt: new Date().toISOString() }; });
-        Auth.audit('vault_pin_change', 'vault', `Vault PIN changed; ${out.length} credentials re-encrypted`); toast('Vault PIN changed');
+        Store.commit((s) => {
+          out.forEach(([c, slot, val]) => { if (slot === 'secret') c.secret = val; else if (slot === 'extra') c.extra = val; else c.secrets[slot.slice(2)] = val; });
+          s.settings.vault = { salt, iter: this.ITER, check, createdAt: new Date().toISOString() };
+        });
+        Auth.audit('vault_pin_change', 'vault', `Vault PIN changed; ${out.length} secrets re-encrypted`); toast('Vault PIN changed');
       }
     });
   },
   forget() { Object.values(this.timers).forEach(clearInterval); this.timers = {}; },
   age(c) { return daysBetween(isoDate(c.changedAt || c.createdAt), today()); },
-  portalUrl(c) { return c.url || (Lists.get('portals', c.portal) || {}).url || ''; },
+
+  /* ---------- Credential types (data, editable) ---------- */
+  types() { const t = Store.s.settings.credTypes; return JSON.parse(JSON.stringify(Array.isArray(t) ? t : DEFAULT_CRED_TYPES)); },
+  type(id) { return this.types().find((t) => t.id === id); },
+  saveTypes(arr) { Store.commit((s) => { s.settings.credTypes = arr; }); },
+  typeLabel(t) { const sv = t.service ? Lists.get('services', t.service) : null; return (sv ? sv.name + ' › ' : '') + t.name; },
+  typeName(c) {
+    if (c.typeId) { const t = this.type(c.typeId); return t ? t.name : 'Credential'; }
+    return Lists.name('portals', c.portal);
+  },
+  /* Non-mutating: returns the credential in the typed shape (old records are converted on the fly). */
+  upgrade(c) {
+    if (c.typeId) return Object.assign({}, c, { layout: c.layout || [], fields: c.fields || {}, secrets: c.secrets || {} });
+    const pname = String(Lists.name('portals', c.portal) || '').toLowerCase();
+    const t = this.type(LEGACY_PORTAL_TYPE[pname] || 'ct_login') || this.types()[0] || null;
+    const lay = (t ? t.fields : []).map(({ id, label, kind }) => ({ id, label, kind }));
+    const fields = {}, secrets = {};
+    let txt = lay.find((f) => !isSecretKind(f.kind)); if (!txt) { txt = { id: 'u0', label: 'Username / Login ID', kind: 'text' }; lay.unshift(txt); }
+    let pw = lay.find((f) => f.kind === 'secret') || lay.find((f) => isSecretKind(f.kind)); if (!pw) { pw = { id: 'p0', label: 'Password', kind: 'secret' }; lay.push(pw); }
+    fields[txt.id] = c.username || ''; if (c.secret) secrets[pw.id] = c.secret;
+    if (c.extra) {
+      const pin = lay.find((f) => f !== pw && f.kind === 'pin') || lay.find((f) => f !== pw && isSecretKind(f.kind));
+      if (pin) secrets[pin.id] = c.extra; else { lay.push({ id: 'x1', label: 'Extra PIN / secret answer', kind: 'pin' }); secrets.x1 = c.extra; }
+    }
+    return Object.assign({}, c, { typeId: t ? t.id : '', layout: lay, fields, secrets });
+  },
+  plain(c) { const u = this.upgrade(c); return u.layout.filter((f) => !isSecretKind(f.kind) && u.fields[f.id]).map((f) => [f.label, u.fields[f.id], f.kind]); },
+  secretList(c) { const u = this.upgrade(c); return u.layout.filter((f) => isSecretKind(f.kind) && u.secrets[f.id]); },
+  portalUrl(c) { const t = c.typeId ? this.type(c.typeId) : null; return c.url || (t && t.url) || (!c.typeId ? (Lists.get('portals', c.portal) || {}).url : '') || ''; },
+
+  /* ---------- Add / edit a credential ---------- */
   open(c, clientId) {
-    const isNew = !c;
-    formModal({
-      title: isNew ? 'Add portal credential' : 'Edit credential', size: 'md',
-      intro: html`<p class="muted sm">${icon('lock')} The password is encrypted with the Vault PIN before it is saved.</p>`,
-      fields: [
-        { name: 'clientId', label: 'Client', type: 'select', options: clientOpts, required: true },
-        { name: 'portal', label: 'Portal', type: 'select', list: 'portals', required: true },
-        { name: 'username', label: 'Username / Login ID', required: true, autocomplete: 'off' },
-        { name: 'password', label: isNew ? 'Password' : 'New password (leave blank to keep)', type: 'password', required: isNew, autocomplete: 'new-password' },
-        { name: 'pin2', label: 'Extra PIN / secret answer (optional, encrypted)', type: 'password', autocomplete: 'off' },
-        { name: 'url', label: 'Login URL (optional)', type: 'url', placeholder: 'Uses the portal default if blank', validate: Valid.url },
-        { name: 'changedAt', label: 'Password last changed', type: 'date' },
-        { name: 'notes', label: 'Notes', type: 'textarea', full: true, rows: 2 }
-      ],
-      values: c ? { clientId: c.clientId, portal: c.portal, username: c.username, url: c.url, changedAt: isoDate(c.changedAt || c.createdAt), notes: c.notes } : { clientId: clientId || '', changedAt: today() },
-      onSubmit: async (v) => {
-        if (!Auth.canSeeClient(v.clientId)) return { clientId: 'Choose one of your clients' };
-        let key = null;
-        if (v.password || v.pin2 || isNew) { key = await this.askKey('Enter the Vault PIN to encrypt this password'); if (!key) return false; }
-        const secret = v.password ? await Crypto.encrypt(key, v.password) : c.secret;
-        const extra = v.pin2 ? await Crypto.encrypt(key, v.pin2) : (c ? c.extra : null);
-        const data = { clientId: v.clientId, portal: v.portal, username: v.username, url: v.url, notes: v.notes, secret, extra, changedAt: v.password ? today() : (v.changedAt || today()) };
-        const client = DB.client(v.clientId);
-        if (isNew) {
-          const rec = Rec.stamp(Object.assign({ id: uid('cr') }, data), true);
-          Store.commit((s) => { s.creds.push(rec); Timeline.add(v.clientId, 'credential', `${Lists.name('portals', v.portal)} credential added`); });
-          Auth.audit('create', 'vault', `Credential added: ${Lists.name('portals', v.portal)} for ${client.code}`, { recordId: rec.id, new: { portal: Lists.name('portals', v.portal), username: v.username } });
-        } else {
-          const old = { username: c.username, portal: c.portal, url: c.url };
-          Store.commit(() => { Object.assign(c, data); Rec.stamp(c); });
-          Auth.audit('edit', 'vault', `Credential edited: ${Lists.name('portals', c.portal)} for ${client.code}${v.password ? ' (password changed)' : ''}`, { recordId: c.id, old, new: { username: v.username, portal: v.portal, url: v.url } });
-        }
-        toast('Credential saved (encrypted)');
+    const isNew = !c; const types = this.types();
+    if (!types.length) { toast('No credential types yet. Add one first.', 'warn'); if (Auth.can('vault', 'create')) this.manageTypes(); return; }
+    const u = c ? this.upgrade(c) : null;
+    let typeId = u && this.type(u.typeId) ? u.typeId : '';
+    const clientF = { name: 'clientId', label: 'Client', type: 'select', options: clientOpts, required: true };
+    const typeF = { name: 'typeId', label: 'Credential type', type: 'select', options: () => types.map((t) => ({ value: t.id, label: this.typeLabel(t) })), required: true, placeholder: '— Choose what you are saving —' };
+    const tail = [
+      { name: 'url', label: 'Login URL (optional)', type: 'url', placeholder: 'Opens from the vault list', validate: Valid.url },
+      { name: 'changedAt', label: 'Password last changed', type: 'date' },
+      { name: 'notes', label: 'Notes', type: 'textarea', full: true, rows: 2 }
+    ];
+    const dynFields = (tid) => { const t = types.find((x) => x.id === tid); return t ? t.fields.map((f) => ({ name: 'cf_' + f.id, label: f.label, type: isSecretKind(f.kind) ? 'password' : (f.kind === 'email' ? 'email' : f.kind === 'url' ? 'url' : 'text'), required: !!f.required && !(u && u.secrets[f.id]), autocomplete: isSecretKind(f.kind) ? 'new-password' : 'off', placeholder: isSecretKind(f.kind) && u && u.secrets[f.id] ? 'Leave blank to keep the saved value' : '', _kind: f.kind, _id: f.id, validate: f.kind === 'url' ? Valid.url : undefined })) : []; };
+    const dynVals = (tid) => { const o = {}; if (u && u.typeId === tid) Object.entries(u.fields).forEach(([k, v]) => { o['cf_' + k] = v; }); return o; };
+    const base = c ? { clientId: u.clientId, url: u.url, changedAt: isoDate(u.changedAt || u.createdAt), notes: u.notes } : { clientId: clientId || '', changedAt: today() };
+    const dynHTML = (tid, vals) => { const fs = dynFields(tid); return fs.length ? html`${fs.map((f) => fieldHTML(f, vals[f.name]))}` : html`<p class="muted sm full">Choose a credential type to see its fields.</p>`; };
+    const body = html`<p class="muted sm form-intro">${icon('lock')} Passwords and PINs are encrypted with the Vault PIN before they are saved. Each type has its own fields — change them from <b>Credential types</b>.</p>
+      <form class="grid-form" novalidate>${fieldHTML(clientF, base.clientId)}${fieldHTML(typeF, typeId)}<div data-dyn style="display:contents">${dynHTML(typeId, dynVals(typeId))}</div>${tail.map((f) => fieldHTML(f, base[f.name]))}<button type="submit" hidden></button></form>`;
+    Modal.open({
+      title: isNew ? 'Add credential' : 'Edit credential', size: 'md', body,
+      foot: html`${Auth.can('vault', 'create') ? html`<button type="button" class="btn ghost" data-mgr>${icon('key')}<span>Credential types</span></button>` : ''}<span class="grow"></span><button type="button" class="btn ghost" data-close>Cancel</button><button type="button" class="btn primary" data-save>Save</button>`,
+      onMount: (el, m) => {
+        const form = el.querySelector('form'); const dyn = el.querySelector('[data-dyn]');
+        const fieldsNow = () => [clientF, typeF, ...dynFields(typeId), ...tail];
+        const paintDyn = (vals) => { dyn.innerHTML = String(dynHTML(typeId, vals)); dynFields(typeId).forEach((f) => { if (f._kind === 'pin') { const i = form.elements[f.name]; if (i) i.setAttribute('inputmode', 'numeric'); } }); bindFormExtras(dyn); };
+        bindFormExtras(form); paintDyn(dynVals(typeId));
+        form.elements.typeId.addEventListener('change', () => { typeId = form.elements.typeId.value; paintDyn(dynVals(typeId)); });
+        const mg = el.querySelector('[data-mgr]'); if (mg) mg.onclick = () => this.manageTypes();
+        let busy = false;
+        const go = async () => {
+          if (busy) return;
+          const vals = readForm(form, fieldsNow()); const errs = validateForm(vals, fieldsNow());
+          if (vals.clientId && !Auth.canSeeClient(vals.clientId)) errs.clientId = 'Choose one of your clients';
+          if (Object.keys(errs).length) { showErrors(form, errs); return; }
+          busy = true; const b = el.querySelector('[data-save]'); b.disabled = true;
+          try {
+            const t = types.find((x) => x.id === vals.typeId);
+            const needKey = isNew || t.fields.some((f) => isSecretKind(f.kind) && vals['cf_' + f.id]);
+            let key = null; if (needKey) { key = await this.askKey('Enter the Vault PIN to encrypt this credential'); if (!key) return; }
+            const fields = {}, secrets = {};
+            for (const f of t.fields) {
+              const v = vals['cf_' + f.id];
+              if (isSecretKind(f.kind)) { if (v) secrets[f.id] = await Crypto.encrypt(key, v); else if (u && u.typeId === t.id && u.secrets[f.id]) secrets[f.id] = u.secrets[f.id]; }
+              else if (v) fields[f.id] = v;
+            }
+            const layout = t.fields.map(({ id, label, kind }) => ({ id, label, kind }));
+            if (u && u.typeId === t.id) u.layout.forEach((f) => { if (!layout.some((x) => x.id === f.id) && (u.secrets[f.id] || u.fields[f.id])) { layout.push({ id: f.id, label: f.label, kind: f.kind }); if (u.secrets[f.id]) secrets[f.id] = u.secrets[f.id]; if (u.fields[f.id]) fields[f.id] = u.fields[f.id]; } });
+            const changedSecret = Object.keys(secrets).some((k) => !(u && u.typeId === t.id && u.secrets[k] === secrets[k]));
+            const data = { clientId: vals.clientId, typeId: t.id, layout, fields, secrets, url: vals.url, notes: vals.notes, changedAt: changedSecret ? today() : (vals.changedAt || today()) };
+            const client = DB.client(vals.clientId); const first = layout.find((f) => !isSecretKind(f.kind)); const login = first ? fields[first.id] || '' : '';
+            if (isNew) {
+              const rec = Rec.stamp(Object.assign({ id: uid('cr') }, data), true);
+              Store.commit((s) => { s.creds.push(rec); Timeline.add(vals.clientId, 'credential', `${t.name} credential added`); });
+              Auth.audit('create', 'vault', `Credential added: ${t.name} for ${client.code}`, { recordId: rec.id, new: { type: t.name, login } });
+            } else {
+              const old = { type: this.typeName(c), url: c.url };
+              Store.commit(() => { ['portal', 'username', 'secret', 'extra'].forEach((k) => { delete c[k]; }); Object.assign(c, data); Rec.stamp(c); });
+              Auth.audit('edit', 'vault', `Credential edited: ${t.name} for ${client.code}${changedSecret ? ' (secret changed)' : ''}`, { recordId: c.id, old, new: { type: t.name, login, url: vals.url } });
+            }
+            toast('Credential saved (encrypted)'); m.close();
+          } catch (e) { console.warn(e); toast(e.message || 'Something went wrong', 'err'); }
+          finally { busy = false; b.disabled = false; }
+        };
+        el.querySelector('[data-save]').onclick = go; form.onsubmit = (e) => { e.preventDefault(); go(); };
       }
     });
   },
-  async reveal(c, field = 'secret') {
-    const client = DB.client(c.clientId) || {};
-    const key = await this.askKey(`Enter the Vault PIN to reveal the ${Lists.name('portals', c.portal)} password for ${client.code || ''}`); if (!key) return;
-    let pw; try { pw = await Crypto.decrypt(key, c[field]); } catch (e) { toast('Could not decrypt this entry', 'err'); return; }
-    Auth.audit('reveal', 'vault', `Password revealed: ${Lists.name('portals', c.portal)} for ${client.code || ''} ${client.name || ''}`, { recordId: c.id });
-    const el = document.querySelector(`[data-secret="${c.id}${field}"]`);
-    if (!el) { toast('Revealed — open the vault list to view', 'info'); return; }
-    let left = 15; clearInterval(this.timers[c.id + field]);
-    el.textContent = pw; el.classList.add('shown'); const cd = document.createElement('small'); cd.className = 'cd'; el.after(cd);
-    const tick = () => { cd.textContent = ` hides in ${left}s`; if (left-- <= 0) { clearInterval(this.timers[c.id + field]); el.textContent = '••••••••'; el.classList.remove('shown'); cd.remove(); } };
-    tick(); this.timers[c.id + field] = setInterval(tick, 1000);
+
+  /* ---------- Manage credential types ---------- */
+  typesList() {
+    const ts = this.types(); const used = (id) => Store.s.creds.filter((c) => c.typeId === id).length;
+    if (!ts.length) return emptyState('No credential types', 'Add a type for each kind of login you store.');
+    return html`<div class="ct-list">${ts.map((t) => html`<div class="ct-item"><div><b>${this.typeLabel(t)}</b> <small class="muted">· ${used(t.id)} saved</small><div class="ct-chips">${t.fields.map((f) => html`<span class="ct-chip ${isSecretKind(f.kind) ? 'sec' : ''}">${isSecretKind(f.kind) ? icon('lock') : ''}${f.label}</span>`)}</div></div><div class="row-acts">${btn('', 'vault:typeedit', { id: t.id, icon: 'edit', cls: 'icon-btn sm', title: 'Edit type' })}${btn('', 'vault:typedel', { id: t.id, icon: 'trash', cls: 'icon-btn sm', title: 'Delete type' })}</div></div>`)}</div>`;
   },
-  async copy(c) {
-    const client = DB.client(c.clientId) || {};
-    const key = await this.askKey('Enter the Vault PIN to copy this password'); if (!key) return;
-    let pw; try { pw = await Crypto.decrypt(key, c.secret); } catch (e) { toast('Could not decrypt this entry', 'err'); return; }
+  redrawTypes() { const el = document.querySelector('[data-types]'); if (el) el.innerHTML = String(this.typesList()); try { Router.refresh(); } catch (e) { /* ignore */ } },
+  manageTypes() {
+    if (!Auth.can('vault', 'create')) { toast('You do not have permission to change credential types', 'warn'); return; }
+    Modal.open({
+      title: 'Credential types', size: 'md',
+      body: html`<p class="muted sm">Each type has its own fields — e.g. <b>Taxation</b>: User ID / Email, Password and PIN; <b>Digital Marketing</b>: Platform, Login, Password, 2FA code. Password and PIN fields are always encrypted.</p><div data-types>${this.typesList()}</div>`,
+      foot: html`${btn('Add credential type', 'vault:typenew', { cls: 'primary', icon: 'plus' })}<span class="grow"></span><button type="button" class="btn ghost" data-close>Close</button>`
+    });
+  },
+  editType(t) {
+    const isNew = !t;
+    const draft = t ? JSON.parse(JSON.stringify(t)) : { id: uid('ct_'), name: '', service: '', url: '', fields: [{ id: uid('f'), label: 'Username / Login ID', kind: 'text', required: true }, { id: uid('f'), label: 'Password', kind: 'secret', required: true }] };
+    const row = (f) => html`<div class="ct-row" data-fid="${f.id}"><input class="inp" data-k="label" value="${f.label}" placeholder="Field name (e.g. PIN)" aria-label="Field name"><select class="inp" data-k="kind" aria-label="Field type">${Object.entries(CRED_KINDS).map(([k, l]) => html`<option value="${k}" ${k === f.kind ? raw('selected') : ''}>${l}</option>`)}</select><label class="chk"><input type="checkbox" data-k="required" ${f.required ? raw('checked') : ''}><span>Required</span></label><button type="button" class="icon-btn sm" data-rm title="Remove field" aria-label="Remove field">${icon('trash')}</button></div>`;
+    const svc = Lists.all('services');
+    Modal.open({
+      title: isNew ? 'New credential type' : 'Edit credential type', size: 'md',
+      body: html`<div class="grid-form"><label class="fld full"><span>Type name<b class="req">*</b></span><input class="inp" data-name value="${draft.name}" placeholder="e.g. Taxation, Facebook Ads, Domain & Hosting"><small class="err" data-err></small></label>
+        <label class="fld"><span>For service (optional)</span><select class="inp" data-svc><option value="">— Any / general —</option>${svc.map((x) => html`<option value="${x.id}" ${x.id === draft.service ? raw('selected') : ''}>${x.name}</option>`)}</select></label>
+        <label class="fld"><span>Default login URL (optional)</span><input class="inp" data-url type="url" value="${draft.url || ''}" placeholder="https://"></label></div>
+        <h4 class="form-sec">Fields</h4><div data-rows>${draft.fields.map(row)}</div><button type="button" class="btn ghost sm" data-addf>${icon('plus')}<span>Add field</span></button>`,
+      foot: html`<span class="grow"></span><button type="button" class="btn ghost" data-close>Cancel</button><button type="button" class="btn primary" data-save>Save type</button>`,
+      onMount: (el, m) => {
+        const rows = el.querySelector('[data-rows]');
+        rows.addEventListener('click', (e) => { const b = e.target.closest('[data-rm]'); if (b) b.closest('.ct-row').remove(); });
+        el.querySelector('[data-addf]').onclick = () => { rows.insertAdjacentHTML('beforeend', String(row({ id: uid('f'), label: '', kind: 'text', required: false }))); const l = rows.querySelector('.ct-row:last-child [data-k=label]'); if (l) l.focus(); };
+        el.querySelector('[data-save]').onclick = () => {
+          const name = el.querySelector('[data-name]').value.trim(); const err = el.querySelector('[data-err]');
+          const fields = [...rows.querySelectorAll('.ct-row')].map((r) => ({ id: r.dataset.fid, label: r.querySelector('[data-k=label]').value.trim(), kind: r.querySelector('[data-k=kind]').value, required: r.querySelector('[data-k=required]').checked }));
+          if (!name) { err.textContent = 'Give the type a name'; return; }
+          if (!fields.length) { toast('Add at least one field', 'warn'); return; }
+          if (fields.some((f) => !f.label)) { toast('Every field needs a name', 'warn'); return; }
+          if (!fields.some((f) => isSecretKind(f.kind))) { toast('Add at least one Password or PIN field — this is what the vault encrypts', 'warn'); return; }
+          const url = el.querySelector('[data-url]').value.trim(); if (Valid.url(url)) { toast(Valid.url(url), 'warn'); return; }
+          const all = this.types(); if (all.some((x) => x.id !== draft.id && x.name.toLowerCase() === name.toLowerCase())) { err.textContent = 'A type with this name already exists'; return; }
+          const rec = { id: draft.id, name, service: el.querySelector('[data-svc]').value, url, fields };
+          const i = all.findIndex((x) => x.id === draft.id); if (i < 0) all.push(rec); else all[i] = rec;
+          this.saveTypes(all); Auth.audit(isNew ? 'create' : 'edit', 'vault', `Credential type ${isNew ? 'added' : 'edited'}: ${name}`);
+          toast('Credential type saved'); m.close(); this.redrawTypes();
+        };
+      }
+    });
+  },
+  async delType(id) {
+    const t = this.type(id); if (!t) return;
+    const n = Store.s.creds.filter((c) => c.typeId === id).length;
+    if (n) { toast(`${n} saved credential${n > 1 ? 's use' : ' uses'} this type. Edit or delete them first.`, 'warn'); return; }
+    if (!(await confirmDlg(`Delete the type "${t.name}"?`, { danger: true, ok: 'Delete' }))) return;
+    this.saveTypes(this.types().filter((x) => x.id !== id)); Auth.audit('delete', 'vault', `Credential type deleted: ${t.name}`); this.redrawTypes();
+  },
+
+  /* ---------- Reveal / copy (PIN every time) ---------- */
+  async reveal(c, fk) {
+    const client = DB.client(c.clientId) || {}; const u = this.upgrade(c); const f = u.layout.find((x) => x.id === fk); if (!f || !u.secrets[fk]) return;
+    const key = await this.askKey(`Enter the Vault PIN to reveal "${f.label}" (${this.typeName(c)}) for ${client.code || ''}`); if (!key) return;
+    let pw; try { pw = await Crypto.decrypt(key, u.secrets[fk]); } catch (e) { toast('Could not decrypt this entry', 'err'); return; }
+    Auth.audit('reveal', 'vault', `Revealed: ${f.label} (${this.typeName(c)}) for ${client.code || ''} ${client.name || ''}`, { recordId: c.id });
+    const el = document.querySelector(`[data-secret="${c.id}${fk}"]`);
+    if (!el) { toast('Revealed — open the vault list to view', 'info'); return; }
+    const tk = c.id + fk; let left = 15; clearInterval(this.timers[tk]);
+    el.textContent = pw; el.classList.add('shown'); const cd = document.createElement('small'); cd.className = 'cd'; el.after(cd);
+    const tick = () => { cd.textContent = ` hides in ${left}s`; if (left-- <= 0) { clearInterval(this.timers[tk]); el.textContent = '••••••••'; el.classList.remove('shown'); cd.remove(); } };
+    tick(); this.timers[tk] = setInterval(tick, 1000);
+  },
+  async copy(c, fk) {
+    const client = DB.client(c.clientId) || {}; const u = this.upgrade(c); const f = u.layout.find((x) => x.id === fk); if (!f || !u.secrets[fk]) return;
+    const key = await this.askKey(`Enter the Vault PIN to copy "${f.label}"`); if (!key) return;
+    let pw; try { pw = await Crypto.decrypt(key, u.secrets[fk]); } catch (e) { toast('Could not decrypt this entry', 'err'); return; }
     try { await navigator.clipboard.writeText(pw); } catch (e) { const t = document.createElement('textarea'); t.value = pw; document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove(); }
     pw = null;
-    Auth.audit('copy', 'vault', `Password copied: ${Lists.name('portals', c.portal)} for ${client.code || ''}`, { recordId: c.id });
-    toast('Password copied. Clipboard will be cleared in 20 seconds.', 'info');
+    Auth.audit('copy', 'vault', `Copied: ${f.label} (${this.typeName(c)}) for ${client.code || ''}`, { recordId: c.id });
+    toast('Copied. Clipboard will be cleared in 20 seconds.', 'info');
     setTimeout(() => { navigator.clipboard && navigator.clipboard.writeText(' ').catch(() => {}); }, 20000);
   },
   table(rows, key) {
     if (!Auth.can('vault')) return html`<p class="muted">No access.</p>`;
+    const secretRow = (c, f) => html`<div class="vsec nw"><small class="muted">${f.label}</small><span class="secret-v" data-secret="${c.id}${f.id}">••••••••</span>${btn('', 'vault:reveal', { id: c.id, icon: 'eye', cls: 'icon-btn sm', title: `Reveal ${f.label} (PIN)`, extra: `data-fk="${esc(f.id)}"` })}${btn('', 'vault:copy', { id: c.id, icon: 'copy', cls: 'icon-btn sm', title: `Copy ${f.label} (PIN)`, extra: `data-fk="${esc(f.id)}"` })}</div>`;
     return dataTable(key, {
       rows, empty: emptyState('No credentials saved', 'Add website, portal, email or software logins for your clients.'),
       rowCls: (c) => (this.age(c) > 90 ? 'row-warn' : ''),
       cols: [
         { key: 'client', label: 'Client', get: (c) => (DB.client(c.clientId) || {}).name, render: (c) => { const cl = DB.client(c.clientId); return cl ? html`<a href="#/clients/${cl.code}">${cl.code} · ${cl.name}</a>` : '—'; } },
-        { key: 'portal', label: 'Portal', get: (c) => Lists.name('portals', c.portal), render: (c) => html`<b>${Lists.name('portals', c.portal)}</b>` },
-        { key: 'username', label: 'Username', render: (c) => html`<code>${c.username}</code>` },
-        { key: 'pw', label: 'Password', sort: false, render: (c) => html`<span class="secret-v" data-secret="${c.id}secret">••••••••</span>` },
+        { key: 'type', label: 'Type', get: (c) => this.typeName(c), render: (c) => html`<b>${this.typeName(c)}</b>` },
+        { key: 'details', label: 'Login details', sort: false, render: (c) => { const p = this.plain(c); return p.length ? html`${p.map(([l, v, k]) => html`<div class="vsec"><small class="muted">${l}</small>${k === 'url' && /^https?:\/\//i.test(v) ? html`<a href="${v}" target="_blank" rel="noopener noreferrer">${v}</a>` : html`<code>${v}</code>`}</div>`)}` : '—'; } },
+        { key: 'pw', label: 'Password / PIN', sort: false, render: (c) => html`${this.secretList(c).map((f) => secretRow(c, f))}` },
         { key: 'changedAt', label: 'Last changed', get: (c) => c.changedAt, render: (c) => html`${fmtDate(c.changedAt)}${this.age(c) > 90 ? html`<br>${badge(`${this.age(c)} days old`, 'amber')}` : ''}` },
-        { key: 'a', label: '', sort: false, cls: 'act', render: (c) => html`<div class="row-acts">${btn('', 'vault:reveal', { id: c.id, icon: 'eye', cls: 'icon-btn sm', title: 'Reveal (PIN)' })}${btn('', 'vault:copy', { id: c.id, icon: 'copy', cls: 'icon-btn sm', title: 'Copy (PIN)' })}${this.portalUrl(c) ? html`<a class="icon-btn sm" href="${this.portalUrl(c)}" target="_blank" rel="noopener noreferrer" title="Open login page" aria-label="Open login page">↗</a>` : ''}${Auth.can('vault', 'edit') ? btn('', 'vault:edit', { id: c.id, icon: 'edit', cls: 'icon-btn sm', title: 'Edit' }) : ''}${Auth.can('vault', 'delete') ? btn('', 'vault:del', { id: c.id, icon: 'trash', cls: 'icon-btn sm', title: 'Delete' }) : ''}</div>` }
+        { key: 'a', label: '', sort: false, cls: 'act', render: (c) => html`<div class="row-acts">${this.portalUrl(c) ? html`<a class="icon-btn sm" href="${this.portalUrl(c)}" target="_blank" rel="noopener noreferrer" title="Open login page" aria-label="Open login page">↗</a>` : ''}${Auth.can('vault', 'edit') ? btn('', 'vault:edit', { id: c.id, icon: 'edit', cls: 'icon-btn sm', title: 'Edit' }) : ''}${Auth.can('vault', 'delete') ? btn('', 'vault:del', { id: c.id, icon: 'trash', cls: 'icon-btn sm', title: 'Delete' }) : ''}</div>` }
       ]
     });
   }
@@ -2316,32 +2476,37 @@ Views.vault = {
   onNew() { if (Auth.can('vault', 'create')) Vault.open(); },
   render() {
     const f = vs('vault');
-    const rows = Auth.byClient(Store.s.creds).filter((c) => { const cl = DB.client(c.clientId) || {}; return textMatch(f.q, cl.name, cl.code, c.username, Lists.name('portals', c.portal), c.notes) && (!f.portal || c.portal === f.portal) && (!f.client || c.clientId === f.client) && (!f.old || Vault.age(c) > 90); });
+    const rows = Auth.byClient(Store.s.creds).filter((c) => { const cl = DB.client(c.clientId) || {}; return textMatch(f.q, cl.name, cl.code, Vault.typeName(c), c.notes, ...Vault.plain(c).map((x) => x[1])) && (!f.type || (c.typeId || '') === f.type) && (!f.client || c.clientId === f.client) && (!f.old || Vault.age(c) > 90); });
     const old = Auth.byClient(Store.s.creds).filter((c) => Vault.age(c) > 90).length;
-    return html`${pageHead('IRIS & Portal Credentials Vault', 'Passwords are encrypted with AES-256-GCM. Reveal and copy require the Vault PIN and are audit-logged.', html`${!Vault.ready() ? btn('Set up Vault PIN', 'vault:setup', { cls: 'primary', icon: 'key' }) : (Auth.can('settings', 'edit') ? html`${btn('Change Vault PIN', 'vault:changepin', { cls: 'ghost', icon: 'key' })}${btn('Reset vault', 'vault:reset', { cls: 'ghost danger-txt', title: 'Forgot the PIN? Delete all saved passwords and start a new vault' })}` : '')}${Auth.can('vault', 'create') ? btn('Add credential', 'vault:new', { cls: 'primary', icon: 'plus' }) : ''}`)}
-      ${!Vault.ready() ? html`<div class="note warn">${icon('lock')} The vault is not set up yet. Create a Vault PIN to start saving portal passwords.</div>` : ''}
+    const typeOpts = Vault.types().map((t) => ({ value: t.id, label: Vault.typeLabel(t) }));
+    return html`${pageHead('Credentials Vault', 'Each credential type has its own fields. Passwords and PINs are encrypted with AES-256-GCM; reveal and copy require the Vault PIN and are audit-logged.', html`${!Vault.ready() ? btn('Set up Vault PIN', 'vault:setup', { cls: 'primary', icon: 'key' }) : (Auth.can('settings', 'edit') ? html`${btn('Change Vault PIN', 'vault:changepin', { cls: 'ghost', icon: 'key' })}${btn('Reset vault', 'vault:reset', { cls: 'ghost danger-txt', title: 'Forgot the PIN? Delete all saved passwords and start a new vault' })}` : '')}${Auth.can('vault', 'create') ? html`${btn('Credential types', 'vault:types', { cls: 'ghost', icon: 'vault' })}${btn('Add credential', 'vault:new', { cls: 'primary', icon: 'plus' })}` : ''}`)}
+      ${!Vault.ready() ? html`<div class="note warn">${icon('lock')} The vault is not set up yet. Create a Vault PIN to start saving passwords.</div>` : ''}
       ${old ? html`<div class="note warn">${old} password${old > 1 ? 's are' : ' is'} older than 90 days. Consider changing ${old > 1 ? 'them' : 'it'} on the portal and updating the vault.</div>` : ''}
-      <div class="card filters">${fInput('vault.q', 'Search client, portal, username…')}${fSelect('vault.portal', 'All portals', listOpts('portals'))}${fSelect('vault.client', 'All clients', clientOpts())}<label class="chk"><input type="checkbox" data-vs="vault.old" ${f.old ? raw('checked') : ''}> <span>Older than 90 days</span></label></div>
+      <div class="card filters">${fInput('vault.q', 'Search client, type, login…')}${fSelect('vault.type', 'All types', typeOpts)}${fSelect('vault.client', 'All clients', clientOpts())}<label class="chk"><input type="checkbox" data-vs="vault.old" ${f.old ? raw('checked') : ''}> <span>Older than 90 days</span></label></div>
       <div class="card p0">${Vault.table(rows, 'vault')}</div>`;
   }
 };
 const credOf = (a) => Store.s.creds.find((c) => c.id === a.dataset.id);
 act('vault:new', (a) => Vault.open(null, a.dataset.client));
 act('vault:edit', (a) => Vault.open(credOf(a)));
-act('vault:reveal', (a) => Vault.reveal(credOf(a)));
-act('vault:copy', (a) => Vault.copy(credOf(a)));
+act('vault:reveal', (a) => Vault.reveal(credOf(a), a.dataset.fk));
+act('vault:copy', (a) => Vault.copy(credOf(a), a.dataset.fk));
 act('vault:setup', () => Vault.setupPin());
 act('vault:changepin', () => Vault.changePin());
+act('vault:types', () => Vault.manageTypes());
+act('vault:typenew', () => Vault.editType());
+act('vault:typeedit', (a) => Vault.editType(Vault.type(a.dataset.id)));
+act('vault:typedel', (a) => Vault.delType(a.dataset.id));
 act('vault:reset', async () => {
   const n = Store.s.creds.length;
-  const v = await promptDlg('Reset the vault', `Use this only if the Vault PIN is lost. All ${n} saved portal passwords will be permanently deleted and you will set a new PIN. Type RESET VAULT to continue.`, { ok: 'Reset vault' });
+  const v = await promptDlg('Reset the vault', `Use this only if the Vault PIN is lost. All ${n} saved credentials will be permanently deleted and you will set a new PIN. Type RESET VAULT to continue.`, { ok: 'Reset vault' });
   if (v === null) return; if (v.trim().toUpperCase() !== 'RESET VAULT') { toast('Not reset — you must type RESET VAULT', 'warn'); return; }
   await Backup.snapshot('before-vault-reset');
   Store.commit((s) => { s.creds = []; s.settings.vault = null; });
   Auth.audit('vault_reset', 'vault', `Vault reset: ${n} encrypted credentials deleted`);
   toast('Vault reset. Set a new Vault PIN to continue.'); Vault.setupPin();
 });
-act('vault:del', async (a) => { const c = credOf(a); if (await confirmDlg('Delete this credential?', { danger: true, ok: 'Delete' })) Rec.remove('creds', c, `${Lists.name('portals', c.portal)} credential`, 'vault'); });
+act('vault:del', async (a) => { const c = credOf(a); if (await confirmDlg('Delete this credential?', { danger: true, ok: 'Delete' })) Rec.remove('creds', c, `${Vault.typeName(c)} credential`, 'vault'); });
 
 /* ==========================================================================
    08-team.js — Team members: profile, photo, workload meter, monthly
@@ -2580,18 +2745,18 @@ Views.tasks = {
     if (params[0]) return TaskDetail.mount(root, params[0]);
     // Kanban drag & drop between status columns
     let dragId = null;
-    $('[data-drag]', root).forEach((c) => {
+    $$('[data-drag]', root).forEach((c) => {
       c.addEventListener('dragstart', (e) => { dragId = c.dataset.drag; c.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', dragId); });
       c.addEventListener('dragend', () => c.classList.remove('dragging'));
     });
-    $('[data-drop]', root).forEach((col) => {
+    $$('[data-drop]', root).forEach((col) => {
       col.addEventListener('dragover', (e) => { e.preventDefault(); col.classList.add('over'); });
       col.addEventListener('dragleave', () => col.classList.remove('over'));
       col.addEventListener('drop', (e) => { e.preventDefault(); col.classList.remove('over'); const id = dragId || e.dataTransfer.getData('text/plain'); const t = DB.task(id); if (t && t.status !== col.dataset.drop) { Tasks.setStatus(t, col.dataset.drop); toast(`${t.code} → ${Lists.name('taskStatuses', col.dataset.drop)}`); } dragId = null; });
     });
     // Calendar drag to change due date
-    $('[data-drag-day]', root).forEach((c) => c.addEventListener('dragstart', (e) => { dragId = c.dataset.dragDay; e.dataTransfer.setData('text/plain', dragId); }));
-    $('[data-drop-day]', root).forEach((d) => {
+    $$('[data-drag-day]', root).forEach((c) => c.addEventListener('dragstart', (e) => { dragId = c.dataset.dragDay; e.dataTransfer.setData('text/plain', dragId); }));
+    $$('[data-drop-day]', root).forEach((d) => {
       d.addEventListener('dragover', (e) => { e.preventDefault(); d.classList.add('over'); });
       d.addEventListener('dragleave', () => d.classList.remove('over'));
       d.addEventListener('drop', (e) => { e.preventDefault(); const t = DB.task(dragId || e.dataTransfer.getData('text/plain')); if (t) { const old = t.due; Store.commit(() => { t.due = d.dataset.dropDay; Rec.stamp(t); }); Auth.audit('edit', 'tasks', `${t.code} due date moved`, { recordId: t.id, old: { due: old }, new: { due: t.due } }); toast(`${t.code} due ${fmtDate(t.due)}`); } dragId = null; });
@@ -2924,16 +3089,16 @@ const Invoices = {
       foot: html`<button type="button" class="btn ghost" data-close>Cancel</button><button type="button" class="btn primary" data-save>Save invoice</button>`,
       onMount: (el, m) => {
         const form = el.querySelector('[data-inv]'); const tb = el.querySelector('[data-lines]');
-        const read = () => $('tr', tb).map((tr) => ({ service: $('[data-k=service]', tr).value, desc: $('[data-k=desc]', tr).value.trim(), qty: Number($('[data-k=qty]', tr).value) || 0, rate: Number($('[data-k=rate]', tr).value) || 0 }));
+        const read = () => $$('tr', tb).map((tr) => ({ service: $('[data-k=service]', tr).value, desc: $('[data-k=desc]', tr).value.trim(), qty: Number($('[data-k=qty]', tr).value) || 0, rate: Number($('[data-k=rate]', tr).value) || 0 }));
         const recalc = () => {
-          const items = read(); $('tr', tb).forEach((tr, i) => { $('[data-amt]', tr).textContent = money(items[i].qty * items[i].rate); });
+          const items = read(); $$('tr', tb).forEach((tr, i) => { $('[data-amt]', tr).textContent = money(items[i].qty * items[i].rate); });
           const t = DB.invTotal({ items, discount: form.discount.value, taxPct: form.taxPct.value });
           el.querySelector('[data-totals]').innerHTML = String(html`<div>Subtotal <b>${money(t.sub)}</b></div><div>Discount <b>− ${money(t.disc)}</b></div><div>Tax <b>${money(t.tax)}</b></div><div class="grand">Total <b>${money(t.total)}</b></div>`);
         };
         tb.addEventListener('input', recalc);
         tb.addEventListener('change', (e) => { if (e.target.dataset.k === 'service') { const tr = e.target.closest('tr'); const d = $('[data-k=desc]', tr); if (!d.value) d.value = Lists.name('services', e.target.value); const r = $('[data-k=rate]', tr); if (!Number(r.value)) r.value = svcFee(e.target.value); recalc(); } });
-        tb.addEventListener('click', (e) => { if (e.target.closest('[data-rm]')) { if ($('tr', tb).length > 1) e.target.closest('tr').remove(); recalc(); } });
-        el.querySelector('[data-add]').onclick = () => { tb.insertAdjacentHTML('beforeend', String(row({ desc: '', service: '', qty: 1, rate: 0 }, $('tr', tb).length))); };
+        tb.addEventListener('click', (e) => { if (e.target.closest('[data-rm]')) { if ($$('tr', tb).length > 1) e.target.closest('tr').remove(); recalc(); } });
+        el.querySelector('[data-add]').onclick = () => { tb.insertAdjacentHTML('beforeend', String(row({ desc: '', service: '', qty: 1, rate: 0 }, $$('tr', tb).length))); };
         form.addEventListener('input', recalc); recalc(); bindFormExtras(form);
         // TC preview
         const tcSel = el.querySelector('[data-tc]'); const tcPrev = el.querySelector('[data-tc-preview]');
@@ -2967,14 +3132,14 @@ const Invoices = {
     const bal = DB.invBalance(inv);
     formModal({
       title: `Record payment · ${inv.number}`, size: 'md', submit: 'Save payment',
-      intro: html`<p>Invoice total <b>${money(DB.invTotal(inv).total)}</b> · paid <b>${money(DB.invPaid(inv))}</b> · balance <b>${money(bal)}</b></p>`,
-      fields: [{ name: 'amount', label: `Amount (${curCode()})`, type: 'money', required: true, min: 1, validate: (v) => v > bal ? `Amount is more than the balance (${money(bal)})` : '' }, { name: 'date', label: 'Payment date', type: 'date', required: true }, { name: 'method', label: 'Method', type: 'select', list: 'paymentMethods', required: true }, { name: 'ref', label: 'Reference / transaction ID' }, { name: 'notes', label: 'Notes', type: 'textarea', full: true, rows: 2 }],
+      intro: html`<p>Invoice total <b>${money(DB.invTotal(inv).total)}</b> · paid <b>${money(DB.invPaid(inv))}</b></p>`,
+      fields: [{ name: 'amount', label: `Amount (${curCode()})`, type: 'money', required: true, min: 1, validate: (v) => v > bal ? `Amount is more than the unpaid amount (${money(bal)})` : '' }, { name: 'date', label: 'Payment date', type: 'date', required: true }, { name: 'method', label: 'Method', type: 'select', list: 'paymentMethods', required: true }, { name: 'ref', label: 'Reference / transaction ID' }, { name: 'notes', label: 'Notes', type: 'textarea', full: true, rows: 2 }],
       values: { amount: bal, date: today(), method: (Lists.all('paymentMethods')[0] || {}).id },
       onSubmit: (v) => {
         const p = Rec.stamp(Object.assign({ id: uid('p'), invoiceId: inv.id, clientId: inv.clientId }, v), true);
         Store.commit((s) => { p.number = Store.next('rcpt'); if (inv.status === 'Draft') inv.status = 'Sent'; s.payments.push(p); Timeline.add(inv.clientId, 'payment', `Payment ${money(v.amount)} received for ${inv.number} (${Lists.name('paymentMethods', v.method)})${DB.invBalance(inv) === 0 ? ' — invoice paid' : ''}`); });
         Auth.audit('create', 'invoices', `Payment ${p.number} ${money(v.amount)} for ${inv.number}`, { recordId: inv.id, new: v });
-        toast(DB.invBalance(inv) === 0 ? `${inv.number} is now fully paid` : `Partial payment recorded. Balance ${money(DB.invBalance(inv))}`);
+        toast(DB.invBalance(inv) === 0 ? `${inv.number} is now fully paid` : 'Partial payment recorded');
       }
     });
   },
@@ -2989,7 +3154,6 @@ const Invoices = {
         { key: 'due', label: 'Due', render: (i) => fmtDate(i.due) },
         { key: 'total', label: 'Total', cls: 'num', get: (i) => DB.invTotal(i).total, render: (i) => money(DB.invTotal(i).total) },
         { key: 'paid', label: 'Paid', cls: 'num', get: (i) => DB.invPaid(i), render: (i) => money(DB.invPaid(i)) },
-        { key: 'bal', label: 'Balance', cls: 'num', get: (i) => DB.invBalance(i), render: (i) => html`<b>${money(DB.invBalance(i))}</b>` },
         { key: 'status', label: 'Status', get: (i) => DB.invStatus(i), render: (i) => badge(DB.invStatus(i), statusTone(DB.invStatus(i))) },
         { key: 'a', label: '', sort: false, cls: 'act', render: (i) => html`<div class="row-acts">${Auth.can('invoices', 'edit') && DB.invBalance(i) > 0 && DB.invStatus(i) !== 'Cancelled' ? btn('', 'inv:pay', { id: i.id, icon: 'invoices', cls: 'icon-btn sm', title: 'Record payment' }) : ''}${btn('', 'inv:print', { id: i.id, icon: 'print', cls: 'icon-btn sm', title: 'Print' })}</div>` }
       ]
@@ -3045,7 +3209,6 @@ const Invoices = {
             <tr><td>Invoice Date</td><td>${fmtDate(inv.date)}</td></tr>
             <tr><td>Due Date</td><td><b>${fmtDate(inv.due)}</b></td></tr>
             <tr><td>Status</td><td><b>${st}</b></td></tr>
-            ${balance > 0 ? html`<tr class="inv-balance-row"><td>Balance Due</td><td><b>${money(balance)}</b></td></tr>` : ''}
           </table>
         </div>
       </div>
@@ -3063,7 +3226,6 @@ const Invoices = {
           ${inv.taxPct ? html`<tr><td>Tax (${inv.taxPct}%)</td><td>${money(t.tax)}</td></tr>` : ''}
           <tr class="g total-row"><td>TOTAL</td><td>${money(t.total)}</td></tr>
           ${paid > 0 ? html`<tr><td>Paid</td><td>${money(paid)}</td></tr>` : ''}
-          ${balance > 0 ? html`<tr class="g balance-row"><td>BALANCE DUE</td><td>${money(balance)}</td></tr>` : ''}
           ${balance === 0 ? html`<tr class="g paid-row"><td colspan="2" style="text-align:center;color:#16a34a">✓ PAID IN FULL</td></tr>` : ''}
         </table>
       </div>
@@ -3073,10 +3235,6 @@ const Invoices = {
       ${co.bank ? html`<div class="p-terms"><b>Bank / Payment Details</b><br><span style="white-space:pre-line">${co.bank}</span></div>` : ''}
       ${tcText ? html`<div class="p-terms"><b>Terms &amp; Conditions${tcTpl && tcTpl.name ? ` — ${tcTpl.name}` : ''}</b><br><span style="white-space:pre-line">${tcText}</span></div>` : ''}
 
-      <div class="inv-sign-row">
-        <div class="inv-sign-box"><div class="inv-sign-line"></div><small>Authorised Signature</small></div>
-        <div class="inv-sign-box"><div class="inv-sign-line"></div><small>Client Acknowledgment</small></div>
-      </div>
       <div class="p-foot">${co.invoiceFooter || ''}<br>${printFooter()}</div>
     </div>`);
     Auth.audit('export', 'invoices', `Printed invoice ${inv.number}`, { recordId: inv.id });
@@ -3135,7 +3293,7 @@ Views.invoices = {
       <div class="card"><div class="row-between wrap"><div><h1>${inv.number} ${badge(st, statusTone(st))}</h1><p class="muted"><a href="#/clients/${c.code}">${c.code} · ${c.name}</a> · issued ${fmtDate(inv.date)} · due ${fmtDate(inv.due)}</p></div>
       <div class="row-acts">${canEdit && DB.invBalance(inv) > 0 && st !== 'Cancelled' ? btn('Record payment', 'inv:pay', { id: inv.id, cls: 'primary', icon: 'invoices' }) : ''}${canEdit && inv.status === 'Draft' ? btn('Mark as sent', 'inv:sent', { id: inv.id, cls: 'ghost' }) : ''}${btn('Print / PDF', 'inv:print', { id: inv.id, icon: 'print', cls: 'ghost' })}${btn('Reminder', 'inv:wa', { id: inv.id, icon: 'wa', cls: 'wa' })}${canEdit ? btn('Edit', 'inv:edit', { id: inv.id, icon: 'edit', cls: 'ghost' }) : ''}${Auth.can('invoices', 'delete') ? btn('', 'inv:del', { id: inv.id, icon: 'trash', cls: 'icon-btn danger-txt', title: 'Delete invoice' }) : ''}</div></div></div>
       <div class="grid-31"><div class="card"><table class="tbl"><thead><tr><th>#</th><th>Description</th><th class="num">Qty</th><th class="num">Rate</th><th class="num">Amount</th></tr></thead><tbody>${inv.items.map((it, i) => html`<tr><td>${i + 1}</td><td>${it.desc}</td><td class="num">${it.qty}</td><td class="num">${money(it.rate)}</td><td class="num">${money(it.qty * it.rate)}</td></tr>`)}</tbody></table>
-        <div class="totals"><div>Subtotal <b>${money(t.sub)}</b></div><div>Discount <b>− ${money(t.disc)}</b></div><div>Tax (${inv.taxPct || 0}%) <b>${money(t.tax)}</b></div><div class="grand">Total <b>${money(t.total)}</b></div><div>Paid <b>${money(DB.invPaid(inv))}</b></div><div class="grand">Balance <b>${money(DB.invBalance(inv))}</b></div></div>${inv.notes ? html`<p class="muted">${inv.notes}</p>` : ''}</div>
+        <div class="totals"><div>Subtotal <b>${money(t.sub)}</b></div><div>Discount <b>− ${money(t.disc)}</b></div><div>Tax (${inv.taxPct || 0}%) <b>${money(t.tax)}</b></div><div class="grand">Total <b>${money(t.total)}</b></div><div>Paid <b>${money(DB.invPaid(inv))}</b></div></div>${inv.notes ? html`<p class="muted">${inv.notes}</p>` : ''}</div>
       <div class="card"><h3>Payments</h3>${progress(t.total ? DB.invPaid(inv) / t.total * 100 : 0, 'green')}${pays.length ? html`<ul class="list">${pays.map((p) => html`<li class="row-between"><span><b>${money(p.amount)}</b> · ${Lists.name('paymentMethods', p.method)}<br><small class="muted">${p.number} · ${fmtDate(p.date)}${p.ref ? ' · ' + p.ref : ''}</small></span>${btn('', 'pay:receipt', { id: p.id, icon: 'print', cls: 'icon-btn sm', title: 'Receipt' })}</li>`)}</ul>` : html`<p class="muted">No payments yet.</p>`}</div></div>`;
   }
 };
@@ -3180,7 +3338,7 @@ act('inv:edit', (a) => Invoices.open(invOf(a)));
 act('inv:pay', (a) => Invoices.pay(invOf(a)));
 act('inv:print', (a) => Invoices.printInvoice(invOf(a)));
 act('inv:sent', (a) => { const i = invOf(a); Store.commit(() => { i.status = 'Sent'; }); Auth.audit('edit', 'invoices', `${i.number} marked as sent`, { recordId: i.id, old: { status: 'Draft' }, new: { status: 'Sent' } }); toast('Marked as sent'); });
-act('inv:wa', (a) => { const i = invOf(a); const c = DB.client(i.clientId); const tpl = { title: `invoice ${i.number} (balance ${money(DB.invBalance(i))})`, due: i.due }; Contact.compose('whatsapp', c, tpl); });
+act('inv:wa', (a) => { const i = invOf(a); const c = DB.client(i.clientId); const tpl = { title: `invoice ${i.number} (${money(DB.invTotal(i).total)})`, due: i.due }; Contact.compose('whatsapp', c, tpl); });
 act('inv:del', async (a) => {
   const i = invOf(a); const p = Store.s.payments.filter((x) => x.invoiceId === i.id);
   if (!(await confirmDlg(html`Delete invoice <b>${i.number}</b>${p.length ? html` and its ${p.length} payment(s)` : ''}?`, { danger: true, ok: 'Delete' }))) return;
@@ -3191,8 +3349,8 @@ act('inv:del', async (a) => {
   toast(`Invoice ${i.number} deleted`, 'ok', { undo: () => { Store.commit((s) => { s.invoices.splice(Math.min(idx, s.invoices.length), 0, i); s.payments.push(...p); }); Auth.audit('restore', 'invoices', `Undo delete: ${i.number}`, { recordId: i.id }); toast('Restored'); } });
 });
 act('inv:export', () => {
-  const rows = Auth.byClient(Store.s.invoices); const H = ['Invoice', 'Client', 'Code', 'Date', 'Due', 'Subtotal', 'Discount', 'Tax', 'Total', 'Paid', 'Balance', 'Status'];
-  downloadFile('invoices.csv', toCSV(H, rows.map((i) => { const c = DB.client(i.clientId) || {}; const t = DB.invTotal(i); return [i.number, c.name, c.code, i.date, i.due, t.sub, t.disc, t.tax, t.total, DB.invPaid(i), DB.invBalance(i), DB.invStatus(i)]; })), 'text/csv');
+  const rows = Auth.byClient(Store.s.invoices); const H = ['Invoice', 'Client', 'Code', 'Date', 'Due', 'Subtotal', 'Discount', 'Tax', 'Total', 'Paid', 'Status'];
+  downloadFile('invoices.csv', toCSV(H, rows.map((i) => { const c = DB.client(i.clientId) || {}; const t = DB.invTotal(i); return [i.number, c.name, c.code, i.date, i.due, t.sub, t.disc, t.tax, t.total, DB.invPaid(i), DB.invStatus(i)]; })), 'text/csv');
   Auth.audit('export', 'invoices', `Exported ${rows.length} invoices`);
 });
 act('inv:statement', (a) => {
@@ -3201,7 +3359,7 @@ act('inv:statement', (a) => {
 });
 act('pay:receipt', (a) => {
   const p = Store.s.payments.find((x) => x.id === a.dataset.id); const i = DB.invoice(p.invoiceId) || {}; const c = DB.client(p.clientId) || {};
-  printHTML(`Receipt ${p.number}`, html`<div class="invoice-print">${printHeader('PAYMENT RECEIPT')}${kv([['Receipt no.', p.number], ['Date', fmtDate(p.date)], ['Received from', `${c.name || ''} (${c.code || ''})`], ['Amount', money(p.amount)], ['Method', Lists.name('paymentMethods', p.method)], ['Reference', p.ref], ['Against invoice', i.number], ['Invoice balance after payment', i.id ? money(DB.invBalance(i)) : '']])}<div class="p-sign">Authorised signature</div><div class="p-foot">${printFooter()}</div></div>`);
+  printHTML(`Receipt ${p.number}`, html`<div class="invoice-print">${printHeader('PAYMENT RECEIPT')}${kv([['Receipt no.', p.number], ['Date', fmtDate(p.date)], ['Received from', `${c.name || ''} (${c.code || ''})`], ['Amount', money(p.amount)], ['Method', Lists.name('paymentMethods', p.method)], ['Reference', p.ref], ['Against invoice', i.number]])}<div class="p-sign">Authorised signature</div><div class="p-foot">${printFooter()}</div></div>`);
 });
 act('pay:del', async (a) => { const p = Store.s.payments.find((x) => x.id === a.dataset.id); if (await confirmDlg(`Delete payment ${p.number} of ${money(p.amount)}?`, { danger: true, ok: 'Delete' })) Rec.remove('payments', p, `Payment ${p.number}`, 'invoices'); });
 act('exp:new', () => Expenses.open());
@@ -3412,7 +3570,7 @@ const Notify = {
     if (Auth.can('clients')) Followups.mine().forEach((f) => { const d = f.snoozedTo || f.date; if (d <= t0 && (f.userId === me || Auth.assignedOnly() || !mid)) { const c = DB.client(f.clientId) || {}; P('followup', `Follow-up ${d < t0 ? 'overdue' : 'today'}: ${c.code || ''} ${c.name || ''}`, f.note, '#/clients/' + c.code, `fu:${f.id}:${d}`); } });
     if (Auth.can('documents')) Auth.byClient(Store.s.documents).forEach((d) => { if (!d.expiry) return; const n = daysBetween(t0, d.expiry); const b = n < 0 ? 'x' : n <= 7 ? '7' : n <= 30 ? '30' : ''; if (b) P('expiry', n < 0 ? `Document expired: ${d.name}` : `Document expires in ${n} days`, `${d.code} · ${Lists.name('docCategories', d.category)} · ${(DB.client(d.clientId) || {}).name || ''} — ${fmtDate(d.expiry)}`, '#/documents?doc=' + d.id, `exp:${d.id}:${d.expiry}:${b}`); });
     if (Auth.can('invoices')) Auth.byClient(Store.s.invoices).forEach((i) => { if (DB.invStatus(i) === 'Overdue') P('invoice', `Invoice overdue: ${i.number}`, `${(DB.client(i.clientId) || {}).name || ''} — balance ${money(DB.invBalance(i))}, due ${fmtDate(i.due)}`, '#/invoices/' + i.number, `inv:${i.id}:${i.due}`); });
-    if (Auth.can('vault')) Auth.byClient(Store.s.creds).forEach((c) => { if (Vault.age(c) > 90) P('password', `Password older than 90 days`, `${Lists.name('portals', c.portal)} for ${(DB.client(c.clientId) || {}).name || ''} was last changed ${fmtDate(c.changedAt)}`, '#/vault', `pw:${c.id}:${c.changedAt}`); });
+    if (Auth.can('vault')) Auth.byClient(Store.s.creds).forEach((c) => { if (Vault.age(c) > 90) P('password', `Password older than 90 days`, `${Vault.typeName(c)} for ${(DB.client(c.clientId) || {}).name || ''} was last changed ${fmtDate(c.changedAt)}`, '#/vault', `pw:${c.id}:${c.changedAt}`); });
     if (Auth.can('compliance')) Store.s.compliance.filter((x) => x.active !== false).forEach((x) => { const d = Compliance.nextDue(x); const n = d ? daysBetween(t0, d) : 99; if (n <= 7) P('deadline', `${x.name} due ${n === 0 ? 'today' : `in ${n} days`}`, `${Lists.name('authorities', x.authority)} deadline on ${fmtDate(d)}`, '#/compliance', `cp:${x.id}:${d}:${n <= 3 ? 3 : 7}`); });
     if (added) { Store.scheduleSave(); App.renderChrome(); }
   }
@@ -3614,7 +3772,7 @@ Views.reports = {
 act('rep:pick', (a) => { const f = vs('rep'); f.rid = a.dataset.id; f.tpl = ''; Router.refresh(); });
 act('rep:cols', () => {
   const { f, d, cols } = Reports.current(); const on = new Set(cols.map((c) => c.key));
-  Modal.open({ title: 'Choose columns', size: 'sm', body: html`<div class="col-pick">${d.cols.map((c) => html`<label class="chk"><input type="checkbox" value="${c.key}" ${on.has(c.key) ? raw('checked') : ''}> <span>${c.label}</span></label>`)}</div>`, foot: html`<button type="button" class="btn ghost" data-close>Cancel</button><button type="button" class="btn primary" data-ok>Apply</button>`, onMount: (el, m) => { el.querySelector('[data-ok]').onclick = () => { const k = $('input:checked', el).map((i) => i.value); if (!k.length) { toast('Choose at least one column', 'warn'); return; } f.cols = f.cols || {}; f.cols[f.rid] = k; m.close(); Router.refresh(); }; } });
+  Modal.open({ title: 'Choose columns', size: 'sm', body: html`<div class="col-pick">${d.cols.map((c) => html`<label class="chk"><input type="checkbox" value="${c.key}" ${on.has(c.key) ? raw('checked') : ''}> <span>${c.label}</span></label>`)}</div>`, foot: html`<button type="button" class="btn ghost" data-close>Cancel</button><button type="button" class="btn primary" data-ok>Apply</button>`, onMount: (el, m) => { el.querySelector('[data-ok]').onclick = () => { const k = $$('input:checked', el).map((i) => i.value); if (!k.length) { toast('Choose at least one column', 'warn'); return; } f.cols = f.cols || {}; f.cols[f.rid] = k; m.close(); Router.refresh(); }; } });
 });
 act('rep:save', async () => { if (!License.need('export_pro')) return;
   const { f, cols } = Reports.current(); const name = await promptDlg('Save report template', 'Template name'); if (!name) return;
@@ -3869,18 +4027,18 @@ Views.settings = {
     const wl = root.querySelector('[data-wl]');
     if (wl) wl.onsubmit = (e) => { e.preventDefault(); const v = { appName: wl.appName.value.trim(), color: wl.color.value, side: wl.side.value }; Store.commit((s) => { s.settings.whiteLabel = v; }); Auth.audit('edit', 'settings', 'Brand colours updated', { new: v }); Theme.setSkin('brand'); document.title = Brand.appName(); toast('Brand colours saved. The Company brand theme is now active.'); };
     const lg = root.querySelector('[data-logo]');
-    if (lg) lg.onchange = async () => { const f = lg.files[0]; if (!f) return; const url = await resizeImage(f, 600); Store.commit((s) => { s.settings.company = Object.assign({}, s.settings.company, { logo: url }); }); Auth.audit('edit', 'settings', 'Logo updated'); setFavicon(); toast('Logo updated'); };
+    if (lg) lg.onchange = async () => { const f = lg.files[0]; if (!f) return; const url = await resizeImage(f, 600); Store.commit((s) => { s.settings.company = Object.assign({}, s.settings.company, { logo: url, logoColor: undefined }); }); Auth.audit('edit', 'settings', 'Logo updated'); setFavicon(); toast('Logo updated'); };
     const ml = root.querySelector('[data-ml]');
     if (ml && !this.ro()) {
       const k = ml.dataset.ml;
       const upd = (id, fn, label) => { const it = Lists.get(k, id); if (!it) return; Store.commit(() => fn(it)); if (label) Auth.audit('edit', 'settings', `Master list "${Lists.defs[k]}": ${label}`); };
-      $('[data-ml-name]', ml).forEach((i) => i.addEventListener('change', () => { const it = Lists.get(k, i.dataset.mlName); const v = i.value.trim(); if (!v) { i.value = it.name; return; } const old = it.name; upd(it.id, (x) => { x.name = v; }, `renamed "${old}" → "${v}"`); toast('Renamed — all records show the new name'); }));
-      $('[data-ml-color]', ml).forEach((i) => i.addEventListener('change', () => upd(i.dataset.mlColor, (x) => { x.color = i.value; }, 'colour changed')));
-      $('[data-ml-fee]', ml).forEach((i) => i.addEventListener('change', () => upd(i.dataset.mlFee, (x) => { x.fee = Number(i.value) || 0; }, 'default fee changed')));
-      $('[data-ml-url]', ml).forEach((i) => i.addEventListener('change', () => { if (Valid.url(i.value)) { toast(Valid.url(i.value), 'warn'); return; } upd(i.dataset.mlUrl, (x) => { x.url = i.value.trim(); }, 'login URL changed'); }));
-      $('[data-ml-done]', ml).forEach((i) => i.addEventListener('change', () => { Store.commit(() => Lists.all(k).forEach((x) => { x.done = x.id === i.dataset.mlDone; })); Auth.audit('edit', 'settings', `Completed status set to "${Lists.name(k, i.dataset.mlDone)}"`); }));
+      $$('[data-ml-name]', ml).forEach((i) => i.addEventListener('change', () => { const it = Lists.get(k, i.dataset.mlName); const v = i.value.trim(); if (!v) { i.value = it.name; return; } const old = it.name; upd(it.id, (x) => { x.name = v; }, `renamed "${old}" → "${v}"`); toast('Renamed — all records show the new name'); }));
+      $$('[data-ml-color]', ml).forEach((i) => i.addEventListener('change', () => upd(i.dataset.mlColor, (x) => { x.color = i.value; }, 'colour changed')));
+      $$('[data-ml-fee]', ml).forEach((i) => i.addEventListener('change', () => upd(i.dataset.mlFee, (x) => { x.fee = Number(i.value) || 0; }, 'default fee changed')));
+      $$('[data-ml-url]', ml).forEach((i) => i.addEventListener('change', () => { if (Valid.url(i.value)) { toast(Valid.url(i.value), 'warn'); return; } upd(i.dataset.mlUrl, (x) => { x.url = i.value.trim(); }, 'login URL changed'); }));
+      $$('[data-ml-done]', ml).forEach((i) => i.addEventListener('change', () => { Store.commit(() => Lists.all(k).forEach((x) => { x.done = x.id === i.dataset.mlDone; })); Auth.audit('edit', 'settings', `Completed status set to "${Lists.name(k, i.dataset.mlDone)}"`); }));
       let drag = null;
-      $('li[draggable=true]', ml).forEach((li) => { li.addEventListener('dragstart', () => { drag = li.dataset.id; li.classList.add('dragging'); }); li.addEventListener('dragend', () => li.classList.remove('dragging')); li.addEventListener('dragover', (e) => e.preventDefault()); li.addEventListener('drop', (e) => { e.preventDefault(); if (!drag || drag === li.dataset.id) return; Store.commit((s) => { const arr = s.lists[k]; const from = arr.findIndex((x) => x.id === drag); const [it] = arr.splice(from, 1); arr.splice(arr.findIndex((x) => x.id === li.dataset.id), 0, it); }); Auth.audit('edit', 'settings', `Master list "${Lists.defs[k]}" reordered`); }); });
+      $$('li[draggable=true]', ml).forEach((li) => { li.addEventListener('dragstart', () => { drag = li.dataset.id; li.classList.add('dragging'); }); li.addEventListener('dragend', () => li.classList.remove('dragging')); li.addEventListener('dragover', (e) => e.preventDefault()); li.addEventListener('drop', (e) => { e.preventDefault(); if (!drag || drag === li.dataset.id) return; Store.commit((s) => { const arr = s.lists[k]; const from = arr.findIndex((x) => x.id === drag); const [it] = arr.splice(from, 1); arr.splice(arr.findIndex((x) => x.id === li.dataset.id), 0, it); }); Auth.audit('edit', 'settings', `Master list "${Lists.defs[k]}" reordered`); }); });
       const add = root.querySelector('[data-ml-add]'); add.onsubmit = (e) => { e.preventDefault(); if (Settings.addListItem(k, add.v.value)) add.v.value = ''; };
     }
     const rs = root.querySelector('[data-regset]');
@@ -3893,7 +4051,7 @@ Views.settings = {
 };
 
 /* ---------- Settings actions ---------- */
-act('set:logoreset', async () => { if (!(await confirmDlg('Remove the company logo? A generated badge will be shown instead.', { ok: 'Remove logo' }))) return; Store.commit((s) => { delete s.settings.company.logo; }); Auth.audit('edit', 'settings', 'Company logo removed'); setFavicon(); toast('Logo removed'); });
+act('set:logoreset', async () => { if (!(await confirmDlg('Remove the company logo? A generated badge will be shown instead.', { ok: 'Remove logo' }))) return; Store.commit((s) => { delete s.settings.company.logo; delete s.settings.company.logoColor; }); Auth.audit('edit', 'settings', 'Company logo removed'); setFavicon(); toast('Logo removed'); });
 act('ml:move', (a) => { const k = a.dataset.k; Store.commit((s) => { const arr = s.lists[k]; const i = arr.findIndex((x) => x.id === a.dataset.id); const j = i + Number(a.dataset.d); if (j < 0 || j >= arr.length) return; [arr[i], arr[j]] = [arr[j], arr[i]]; }); });
 act('ml:del', async (a) => {
   const k = a.dataset.k; const it = Lists.get(k, a.dataset.id); const n = Settings.usage(k, it.id);
@@ -4160,7 +4318,7 @@ const ThemeUI = {
   open() {
     Modal.open({ title: 'Themes', size: 'xl', cls: 'theme-modal', body: html`<div data-theme-gallery>${this.gallery(true)}</div>`, foot: html`<button type="button" class="btn primary" data-close>Done</button>` });
   },
-  redraw() { $('[data-theme-gallery]').forEach((g) => { g.innerHTML = String(this.gallery(true)); }); }
+  redraw() { $$('[data-theme-gallery]').forEach((g) => { g.innerHTML = String(this.gallery(true)); }); }
 };
 act('theme:open', () => ThemeUI.open());
 act('theme:skin', (a) => { Theme.setSkin(a.dataset.id); ThemeUI.redraw(); });
@@ -4216,6 +4374,42 @@ const Brand = {
     const c = this.company();
     return html`${[c.name, c.phone, c.email, c.website, c.address].filter(Boolean).join('  |  ')}`;
   },
+  /* Accent colour for printed documents: dominant colour of the company logo (falls back to the theme brand colour). */
+  printColor() { const c = this.company(); return /^#[0-9a-f]{6}$/i.test(c.logoColor || '') ? c.logoColor : this.color(); },
+  logoColor(src) {
+    return new Promise((res) => {
+      const img = new Image();
+      img.onerror = () => res('');
+      img.onload = () => {
+        try {
+          const n = 48; const cv = document.createElement('canvas'); cv.width = cv.height = n;
+          const cx = cv.getContext('2d', { willReadFrequently: true }); cx.drawImage(img, 0, 0, n, n);
+          const d = cx.getImageData(0, 0, n, n).data; const bins = {}; const dark = { w: 0, r: 0, g: 0, b: 0 };
+          for (let i = 0; i < d.length; i += 4) {
+            if (d[i + 3] < 200) continue;
+            const r = d[i], g = d[i + 1], b = d[i + 2]; const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+            const sat = mx === 0 ? 0 : (mx - mn) / mx; const lum = (r * 299 + g * 587 + b * 114) / 1000;
+            if (lum > 238) continue;
+            if (sat < 0.28 || lum < 28) { dark.w++; dark.r += r; dark.g += g; dark.b += b; continue; }
+            const k = (r >> 5) + ',' + (g >> 5) + ',' + (b >> 5); const o = bins[k] || (bins[k] = { w: 0, r: 0, g: 0, b: 0 });
+            o.w += sat; o.r += r * sat; o.g += g * sat; o.b += b * sat;
+          }
+          let best = null; Object.values(bins).forEach((o) => { if (!best || o.w > best.w) best = o; });
+          const hex = (o, div) => '#' + [o.r, o.g, o.b].map((v) => Math.round(v / div).toString(16).padStart(2, '0')).join('');
+          if (best && best.w > 0) return res(hex(best, best.w));
+          if (dark.w > 0) return res(hex(dark, dark.w));
+          res('');
+        } catch (e) { res(''); }
+      };
+      img.src = src;
+    });
+  },
+  /* Works out (once per logo) the colour used for the invoice header line, tables and labels. */
+  async syncLogoColor() {
+    const c = this.company(); if (!c.logo) return;
+    const col = await this.logoColor(c.logo);
+    Store.commit((s) => { s.settings.company.logoColor = col; });
+  },
   customLogo() { const c = this.company(); return c.logo ? c.logo : ''; },
   /* Brand colour of the active theme, for favicon / print */
   color() { try { return Theme.skin().brand; } catch (e) { return '#1d64c8'; } }
@@ -4240,39 +4434,11 @@ function setFavicon() {
 
 /* ---------- Currencies ---------- */
 const CURRENCIES = [
-  ['USD', '
-</script>
-</body>
-</html>
-, 'US Dollar'], ['EUR', '€', 'Euro'], ['GBP', '£', 'British Pound'], ['PKR', 'Rs', 'Pakistani Rupee'], ['INR', '₹', 'Indian Rupee'],
+  ['USD', '$', 'US Dollar'], ['EUR', '€', 'Euro'], ['GBP', '£', 'British Pound'], ['PKR', 'Rs', 'Pakistani Rupee'], ['INR', '₹', 'Indian Rupee'],
   ['AED', 'AED', 'UAE Dirham'], ['SAR', 'SAR', 'Saudi Riyal'], ['QAR', 'QAR', 'Qatari Riyal'], ['KWD', 'KWD', 'Kuwaiti Dinar'], ['BDT', '৳', 'Bangladeshi Taka'],
-  ['CAD', 'CA
-</script>
-</body>
-</html>
-, 'Canadian Dollar'], ['AUD', 'A
-</script>
-</body>
-</html>
-, 'Australian Dollar'], ['NZD', 'NZ
-</script>
-</body>
-</html>
-, 'New Zealand Dollar'], ['SGD', 'S
-</script>
-</body>
-</html>
-, 'Singapore Dollar'], ['MYR', 'RM', 'Malaysian Ringgit'],
+  ['CAD', 'CA$', 'Canadian Dollar'], ['AUD', 'A$', 'Australian Dollar'], ['NZD', 'NZ$', 'New Zealand Dollar'], ['SGD', 'S$', 'Singapore Dollar'], ['MYR', 'RM', 'Malaysian Ringgit'],
   ['TRY', '₺', 'Turkish Lira'], ['EGP', 'E£', 'Egyptian Pound'], ['NGN', '₦', 'Nigerian Naira'], ['KES', 'KSh', 'Kenyan Shilling'], ['ZAR', 'R', 'South African Rand'],
-  ['CNY', 'CN¥', 'Chinese Yuan'], ['JPY', '¥', 'Japanese Yen'], ['CHF', 'CHF', 'Swiss Franc'], ['BRL', 'R
-</script>
-</body>
-</html>
-, 'Brazilian Real'], ['MXN', 'MX
-</script>
-</body>
-</html>
-, 'Mexican Peso']
+  ['CNY', 'CN¥', 'Chinese Yuan'], ['JPY', '¥', 'Japanese Yen'], ['CHF', 'CHF', 'Swiss Franc'], ['BRL', 'R$', 'Brazilian Real'], ['MXN', 'MX$', 'Mexican Peso']
 ];
 
 /* ==========================================================================
@@ -4310,7 +4476,7 @@ const Setup = {
       const pe = Auth.policy(f.password.value); if (pe) errs.password = pe;
       else if (f.password.value !== f.confirm.value) errs.confirm = 'Passwords do not match';
     }
-    $('[data-err-for]', f).forEach((e) => { e.textContent = errs[e.dataset.errFor] || ''; });
+    $$('[data-err-for]', f).forEach((e) => { e.textContent = errs[e.dataset.errFor] || ''; });
     return !Object.keys(errs).length;
   },
   fld(name, label, o = {}) {
@@ -4334,7 +4500,7 @@ const Setup = {
       <p class="muted sm">You will be the Super Admin and can add more users and roles later in Settings.</p>`;
   },
   /* keep the in-memory company in sync so brandLogo() previews what was typed/uploaded */
-  sync() { const c = Store.s.settings.company; c.name = this.W.name.trim(); if (this.W.logo) c.logo = this.W.logo; else delete c.logo; },
+  sync() { const c = Store.s.settings.company; c.name = this.W.name.trim(); if (this.W.logo) c.logo = this.W.logo; else delete c.logo; delete c.logoColor; },
   render() {
     this.sync();
     const last = this.step === this.steps.length - 1;
@@ -4356,7 +4522,7 @@ const Setup = {
       const cl = $('[data-su-logo-clear]'); if (cl) cl.onclick = () => { this.W.logo = ''; this.collect(); this.render(); };
     }
     this.preview();
-    if (this.step === 2) { $('[data-theme-gallery]').forEach((g) => { g.addEventListener('click', () => setTimeout(() => this.preview(), 30)); }); }
+    if (this.step === 2) { $$('[data-theme-gallery]').forEach((g) => { g.addEventListener('click', () => setTimeout(() => this.preview(), 30)); }); }
     const first = f.querySelector('input:not([type=file]):not([type=hidden]),textarea'); if (first && this.step !== 2) first.focus();
   },
   /* Reflect the company name/logo on the left panel while typing */
@@ -4369,7 +4535,7 @@ const Setup = {
     const s = Store.s; const cur = CURRENCIES.find((c) => c[0] === W.currency) || CURRENCIES[0];
     const skin = Theme.skinId(); const now = new Date().toISOString();
     Object.assign(s.settings.company, { name: W.name.trim(), industry: W.industry, phone: W.phone.trim(), email: W.email.trim(), website: W.website.trim(), address: W.address.trim(), country: W.country.trim(), dialCode: W.dialCode.replace(/\D/g, ''), ntn: W.ntn.trim() });
-    if (W.logo) s.settings.company.logo = W.logo; else delete s.settings.company.logo;
+    if (W.logo) s.settings.company.logo = W.logo; else delete s.settings.company.logo; delete s.settings.company.logoColor;
     s.settings.currency = { code: cur[0], symbol: cur[1] };
     s.settings.defaultSkin = skin;
     // services typed by the owner: "Name, price" per line
@@ -4811,11 +4977,7 @@ const Seed = {
         { id: 'tc_consult', name: 'Consulting / Retainer', isDefault: false, text: '1. Fees are due within 15 days of invoice date.\n2. Retainer fees are non-refundable once work has commenced.\n3. Additional work beyond agreed scope will be billed separately.\n4. Disputes must be raised within 7 days of invoice date.' },
         { id: 'tc_tax', name: 'Tax & Accounting', isDefault: false, text: '1. Payment is due within 30 days of invoice date.\n2. Documents required from the client must be provided in time. Delays caused by late submission will not be the responsibility of the firm.\n3. The firm shall not be liable for penalties arising from inaccurate information provided by the client.\n4. Confidentiality of all client information is maintained.' }
       ],
-      currency: { code: 'USD', symbol: '
-</script>
-</body>
-</html>
- },
+      currency: { code: 'USD', symbol: '$' },
       inactivityMin: 15, capacity: 15, filingDueDay: 18, defaultTaxPct: 0, invoiceDueDays: 15, maxUploadMB: 10,
       allowRegistration: false, requireApproval: true, registrationRole: 'role_view', browserNotify: false,
       templates: [
@@ -4840,11 +5002,7 @@ const Seed = {
     // Upgrade safety: make sure every list key exists
     const L = this.lists(); Object.keys(L).forEach((k) => { if (!s.lists[k]) s.lists[k] = L[k]; });
     s.settings.prefixes = Object.assign({}, this.settings().prefixes, s.settings.prefixes || {});
-    if (!s.settings.currency) s.settings.currency = { code: 'USD', symbol: '
-</script>
-</body>
-</html>
- };
+    if (!s.settings.currency) s.settings.currency = { code: 'USD', symbol: '$' };
     if (!s.settings.setupDone) s.settings.setupDone = true;
     // Projects: ensure array exists for existing installs
     if (!s.projects) s.projects = [];

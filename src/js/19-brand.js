@@ -46,6 +46,42 @@ const Brand = {
     const c = this.company();
     return html`${[c.name, c.phone, c.email, c.website, c.address].filter(Boolean).join('  |  ')}`;
   },
+  /* Accent colour for printed documents: dominant colour of the company logo (falls back to the theme brand colour). */
+  printColor() { const c = this.company(); return /^#[0-9a-f]{6}$/i.test(c.logoColor || '') ? c.logoColor : this.color(); },
+  logoColor(src) {
+    return new Promise((res) => {
+      const img = new Image();
+      img.onerror = () => res('');
+      img.onload = () => {
+        try {
+          const n = 48; const cv = document.createElement('canvas'); cv.width = cv.height = n;
+          const cx = cv.getContext('2d', { willReadFrequently: true }); cx.drawImage(img, 0, 0, n, n);
+          const d = cx.getImageData(0, 0, n, n).data; const bins = {}; const dark = { w: 0, r: 0, g: 0, b: 0 };
+          for (let i = 0; i < d.length; i += 4) {
+            if (d[i + 3] < 200) continue;
+            const r = d[i], g = d[i + 1], b = d[i + 2]; const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+            const sat = mx === 0 ? 0 : (mx - mn) / mx; const lum = (r * 299 + g * 587 + b * 114) / 1000;
+            if (lum > 238) continue;
+            if (sat < 0.28 || lum < 28) { dark.w++; dark.r += r; dark.g += g; dark.b += b; continue; }
+            const k = (r >> 5) + ',' + (g >> 5) + ',' + (b >> 5); const o = bins[k] || (bins[k] = { w: 0, r: 0, g: 0, b: 0 });
+            o.w += sat; o.r += r * sat; o.g += g * sat; o.b += b * sat;
+          }
+          let best = null; Object.values(bins).forEach((o) => { if (!best || o.w > best.w) best = o; });
+          const hex = (o, div) => '#' + [o.r, o.g, o.b].map((v) => Math.round(v / div).toString(16).padStart(2, '0')).join('');
+          if (best && best.w > 0) return res(hex(best, best.w));
+          if (dark.w > 0) return res(hex(dark, dark.w));
+          res('');
+        } catch (e) { res(''); }
+      };
+      img.src = src;
+    });
+  },
+  /* Works out (once per logo) the colour used for the invoice header line, tables and labels. */
+  async syncLogoColor() {
+    const c = this.company(); if (!c.logo) return;
+    const col = await this.logoColor(c.logo);
+    Store.commit((s) => { s.settings.company.logoColor = col; });
+  },
   customLogo() { const c = this.company(); return c.logo ? c.logo : ''; },
   /* Brand colour of the active theme, for favicon / print */
   color() { try { return Theme.skin().brand; } catch (e) { return '#1d64c8'; } }

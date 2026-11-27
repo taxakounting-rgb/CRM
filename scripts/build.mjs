@@ -1,32 +1,25 @@
-// Bundles src/ into one offline HTML file: dist/Universal_CRM.html
-import { readFileSync, writeFileSync, readdirSync, mkdirSync, existsSync, rmSync } from 'node:fs';
-import { join, dirname } from 'node:path';
+// Bundles src/ (css + js in order.json order) into one offline HTML file in dist/.
+import fs from 'node:fs';
+import path from 'node:path';
+import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 
-const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const read = (p) => readFileSync(join(root, p), 'utf8');
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const src = path.join(root, 'src');
+const read = (...p) => fs.readFileSync(path.join(...p), 'utf8');
 
-const cssFiles = readdirSync(join(root, 'src/css')).filter((f) => f.endsWith('.css')).sort();
-const order = JSON.parse(read('src/order.json'));
-const missing = order.filter((f) => !existsSync(join(root, 'src/js', f)));
-if (missing.length) { console.error('Missing JS files listed in order.json:', missing.join(', ')); process.exit(1); }
+const order = JSON.parse(read(src, 'order.json'));
+const css = fs.readdirSync(path.join(src, 'css')).filter((f) => f.endsWith('.css')).sort().map((f) => read(src, 'css', f)).join('\n');
+const js = order.map((f) => read(src, 'js', f)).join('\n');
 
-const css = cssFiles.map((f) => read('src/css/' + f)).join('\n');
-const js = order.map((f) => `/* ---- ${f} ---- */\n` + read('src/js/' + f)).join('\n');
+// Syntax check the bundled script before writing anything.
+const tmp = path.join(os.tmpdir(), 'crm-bundle-check.js');
+fs.writeFileSync(tmp, js);
+execFileSync(process.execPath, ['--check', tmp], { stdio: 'inherit' });
 
-// Syntax check before writing
-const tmp = join(root, 'dist', '.bundle-check.js');
-mkdirSync(join(root, 'dist'), { recursive: true });
-writeFileSync(tmp, js);
-try { execFileSync(process.execPath, ['--check', tmp], { stdio: 'inherit' }); }
-catch { console.error('JS syntax error in bundle'); process.exit(1); }
-
-// Escape closing script tags inside the bundle
-const safeJs = js.replace(/<\/script/gi, '<\\/script');
-const html = read('src/index.html').replace('/*__CSS__*/', () => css).replace('/*__JS__*/', () => safeJs);
-writeFileSync(join(root, 'dist/Universal_CRM.html'), html);
-writeFileSync(join(root, 'dist/index.html'), html); // Vercel / static hosting entry point
-console.log(`Built dist/Universal_CRM.html (${(html.length / 1024).toFixed(0)} KB)`);
-
-rmSync(join(root, 'dist', '.bundle-check.js'), { force: true });
+const page = read(src, 'index.html').replace('/*__CSS__*/', () => css).replace('/*__JS__*/', () => js);
+fs.mkdirSync(path.join(root, 'dist'), { recursive: true });
+fs.writeFileSync(path.join(root, 'dist', 'Universal_CRM.html'), page);
+fs.writeFileSync(path.join(root, 'dist', 'index.html'), page);
+console.log(`Built dist/Universal_CRM.html (${(page.length / 1024).toFixed(0)} KB)`);

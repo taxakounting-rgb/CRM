@@ -57,7 +57,7 @@ const Setup = {
       <p class="muted sm">You will be the Super Admin and can add more users and roles later in Settings.</p>`;
   },
   /* keep the in-memory company in sync so brandLogo() previews what was typed/uploaded */
-  sync() { const c = Store.s.settings.company; c.name = this.W.name.trim(); if (this.W.logo) c.logo = this.W.logo; else delete c.logo; },
+  sync() { const c = Store.s.settings.company; c.name = this.W.name.trim(); if (this.W.logo) c.logo = this.W.logo; else delete c.logo; delete c.logoColor; },
   render() {
     this.sync();
     const last = this.step === this.steps.length - 1;
@@ -92,7 +92,7 @@ const Setup = {
     const s = Store.s; const cur = CURRENCIES.find((c) => c[0] === W.currency) || CURRENCIES[0];
     const skin = Theme.skinId(); const now = new Date().toISOString();
     Object.assign(s.settings.company, { name: W.name.trim(), industry: W.industry, phone: W.phone.trim(), email: W.email.trim(), website: W.website.trim(), address: W.address.trim(), country: W.country.trim(), dialCode: W.dialCode.replace(/\D/g, ''), ntn: W.ntn.trim() });
-    if (W.logo) s.settings.company.logo = W.logo; else delete s.settings.company.logo;
+    if (W.logo) s.settings.company.logo = W.logo; else delete s.settings.company.logo; delete s.settings.company.logoColor;
     s.settings.currency = { code: cur[0], symbol: cur[1] };
     s.settings.defaultSkin = skin;
     // services typed by the owner: "Name, price" per line

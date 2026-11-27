@@ -235,7 +235,7 @@ Views.settings = {
     const wl = root.querySelector('[data-wl]');
     if (wl) wl.onsubmit = (e) => { e.preventDefault(); const v = { appName: wl.appName.value.trim(), color: wl.color.value, side: wl.side.value }; Store.commit((s) => { s.settings.whiteLabel = v; }); Auth.audit('edit', 'settings', 'Brand colours updated', { new: v }); Theme.setSkin('brand'); document.title = Brand.appName(); toast('Brand colours saved. The Company brand theme is now active.'); };
     const lg = root.querySelector('[data-logo]');
-    if (lg) lg.onchange = async () => { const f = lg.files[0]; if (!f) return; const url = await resizeImage(f, 600); Store.commit((s) => { s.settings.company = Object.assign({}, s.settings.company, { logo: url }); }); Auth.audit('edit', 'settings', 'Logo updated'); setFavicon(); toast('Logo updated'); };
+    if (lg) lg.onchange = async () => { const f = lg.files[0]; if (!f) return; const url = await resizeImage(f, 600); Store.commit((s) => { s.settings.company = Object.assign({}, s.settings.company, { logo: url, logoColor: undefined }); }); Auth.audit('edit', 'settings', 'Logo updated'); setFavicon(); toast('Logo updated'); };
     const ml = root.querySelector('[data-ml]');
     if (ml && !this.ro()) {
       const k = ml.dataset.ml;
@@ -259,7 +259,7 @@ Views.settings = {
 };
 
 /* ---------- Settings actions ---------- */
-act('set:logoreset', async () => { if (!(await confirmDlg('Remove the company logo? A generated badge will be shown instead.', { ok: 'Remove logo' }))) return; Store.commit((s) => { delete s.settings.company.logo; }); Auth.audit('edit', 'settings', 'Company logo removed'); setFavicon(); toast('Logo removed'); });
+act('set:logoreset', async () => { if (!(await confirmDlg('Remove the company logo? A generated badge will be shown instead.', { ok: 'Remove logo' }))) return; Store.commit((s) => { delete s.settings.company.logo; delete s.settings.company.logoColor; }); Auth.audit('edit', 'settings', 'Company logo removed'); setFavicon(); toast('Logo removed'); });
 act('ml:move', (a) => { const k = a.dataset.k; Store.commit((s) => { const arr = s.lists[k]; const i = arr.findIndex((x) => x.id === a.dataset.id); const j = i + Number(a.dataset.d); if (j < 0 || j >= arr.length) return; [arr[i], arr[j]] = [arr[j], arr[i]]; }); });
 act('ml:del', async (a) => {
   const k = a.dataset.k; const it = Lists.get(k, a.dataset.id); const n = Settings.usage(k, it.id);

@@ -72,14 +72,14 @@ const Invoices = {
     const bal = DB.invBalance(inv);
     formModal({
       title: `Record payment · ${inv.number}`, size: 'md', submit: 'Save payment',
-      intro: html`<p>Invoice total <b>${money(DB.invTotal(inv).total)}</b> · paid <b>${money(DB.invPaid(inv))}</b> · balance <b>${money(bal)}</b></p>`,
-      fields: [{ name: 'amount', label: `Amount (${curCode()})`, type: 'money', required: true, min: 1, validate: (v) => v > bal ? `Amount is more than the balance (${money(bal)})` : '' }, { name: 'date', label: 'Payment date', type: 'date', required: true }, { name: 'method', label: 'Method', type: 'select', list: 'paymentMethods', required: true }, { name: 'ref', label: 'Reference / transaction ID' }, { name: 'notes', label: 'Notes', type: 'textarea', full: true, rows: 2 }],
+      intro: html`<p>Invoice total <b>${money(DB.invTotal(inv).total)}</b> · paid <b>${money(DB.invPaid(inv))}</b></p>`,
+      fields: [{ name: 'amount', label: `Amount (${curCode()})`, type: 'money', required: true, min: 1, validate: (v) => v > bal ? `Amount is more than the unpaid amount (${money(bal)})` : '' }, { name: 'date', label: 'Payment date', type: 'date', required: true }, { name: 'method', label: 'Method', type: 'select', list: 'paymentMethods', required: true }, { name: 'ref', label: 'Reference / transaction ID' }, { name: 'notes', label: 'Notes', type: 'textarea', full: true, rows: 2 }],
       values: { amount: bal, date: today(), method: (Lists.all('paymentMethods')[0] || {}).id },
       onSubmit: (v) => {
         const p = Rec.stamp(Object.assign({ id: uid('p'), invoiceId: inv.id, clientId: inv.clientId }, v), true);
         Store.commit((s) => { p.number = Store.next('rcpt'); if (inv.status === 'Draft') inv.status = 'Sent'; s.payments.push(p); Timeline.add(inv.clientId, 'payment', `Payment ${money(v.amount)} received for ${inv.number} (${Lists.name('paymentMethods', v.method)})${DB.invBalance(inv) === 0 ? ' — invoice paid' : ''}`); });
         Auth.audit('create', 'invoices', `Payment ${p.number} ${money(v.amount)} for ${inv.number}`, { recordId: inv.id, new: v });
-        toast(DB.invBalance(inv) === 0 ? `${inv.number} is now fully paid` : `Partial payment recorded. Balance ${money(DB.invBalance(inv))}`);
+        toast(DB.invBalance(inv) === 0 ? `${inv.number} is now fully paid` : 'Partial payment recorded');
       }
     });
   },
@@ -94,7 +94,6 @@ const Invoices = {
         { key: 'due', label: 'Due', render: (i) => fmtDate(i.due) },
         { key: 'total', label: 'Total', cls: 'num', get: (i) => DB.invTotal(i).total, render: (i) => money(DB.invTotal(i).total) },
         { key: 'paid', label: 'Paid', cls: 'num', get: (i) => DB.invPaid(i), render: (i) => money(DB.invPaid(i)) },
-        { key: 'bal', label: 'Balance', cls: 'num', get: (i) => DB.invBalance(i), render: (i) => html`<b>${money(DB.invBalance(i))}</b>` },
         { key: 'status', label: 'Status', get: (i) => DB.invStatus(i), render: (i) => badge(DB.invStatus(i), statusTone(DB.invStatus(i))) },
         { key: 'a', label: '', sort: false, cls: 'act', render: (i) => html`<div class="row-acts">${Auth.can('invoices', 'edit') && DB.invBalance(i) > 0 && DB.invStatus(i) !== 'Cancelled' ? btn('', 'inv:pay', { id: i.id, icon: 'invoices', cls: 'icon-btn sm', title: 'Record payment' }) : ''}${btn('', 'inv:print', { id: i.id, icon: 'print', cls: 'icon-btn sm', title: 'Print' })}</div>` }
       ]
@@ -150,7 +149,6 @@ const Invoices = {
             <tr><td>Invoice Date</td><td>${fmtDate(inv.date)}</td></tr>
             <tr><td>Due Date</td><td><b>${fmtDate(inv.due)}</b></td></tr>
             <tr><td>Status</td><td><b>${st}</b></td></tr>
-            ${balance > 0 ? html`<tr class="inv-balance-row"><td>Balance Due</td><td><b>${money(balance)}</b></td></tr>` : ''}
           </table>
         </div>
       </div>
@@ -168,7 +166,6 @@ const Invoices = {
           ${inv.taxPct ? html`<tr><td>Tax (${inv.taxPct}%)</td><td>${money(t.tax)}</td></tr>` : ''}
           <tr class="g total-row"><td>TOTAL</td><td>${money(t.total)}</td></tr>
           ${paid > 0 ? html`<tr><td>Paid</td><td>${money(paid)}</td></tr>` : ''}
-          ${balance > 0 ? html`<tr class="g balance-row"><td>BALANCE DUE</td><td>${money(balance)}</td></tr>` : ''}
           ${balance === 0 ? html`<tr class="g paid-row"><td colspan="2" style="text-align:center;color:#16a34a">✓ PAID IN FULL</td></tr>` : ''}
         </table>
       </div>
@@ -178,10 +175,6 @@ const Invoices = {
       ${co.bank ? html`<div class="p-terms"><b>Bank / Payment Details</b><br><span style="white-space:pre-line">${co.bank}</span></div>` : ''}
       ${tcText ? html`<div class="p-terms"><b>Terms &amp; Conditions${tcTpl && tcTpl.name ? ` — ${tcTpl.name}` : ''}</b><br><span style="white-space:pre-line">${tcText}</span></div>` : ''}
 
-      <div class="inv-sign-row">
-        <div class="inv-sign-box"><div class="inv-sign-line"></div><small>Authorised Signature</small></div>
-        <div class="inv-sign-box"><div class="inv-sign-line"></div><small>Client Acknowledgment</small></div>
-      </div>
       <div class="p-foot">${co.invoiceFooter || ''}<br>${printFooter()}</div>
     </div>`);
     Auth.audit('export', 'invoices', `Printed invoice ${inv.number}`, { recordId: inv.id });
@@ -240,7 +233,7 @@ Views.invoices = {
       <div class="card"><div class="row-between wrap"><div><h1>${inv.number} ${badge(st, statusTone(st))}</h1><p class="muted"><a href="#/clients/${c.code}">${c.code} · ${c.name}</a> · issued ${fmtDate(inv.date)} · due ${fmtDate(inv.due)}</p></div>
       <div class="row-acts">${canEdit && DB.invBalance(inv) > 0 && st !== 'Cancelled' ? btn('Record payment', 'inv:pay', { id: inv.id, cls: 'primary', icon: 'invoices' }) : ''}${canEdit && inv.status === 'Draft' ? btn('Mark as sent', 'inv:sent', { id: inv.id, cls: 'ghost' }) : ''}${btn('Print / PDF', 'inv:print', { id: inv.id, icon: 'print', cls: 'ghost' })}${btn('Reminder', 'inv:wa', { id: inv.id, icon: 'wa', cls: 'wa' })}${canEdit ? btn('Edit', 'inv:edit', { id: inv.id, icon: 'edit', cls: 'ghost' }) : ''}${Auth.can('invoices', 'delete') ? btn('', 'inv:del', { id: inv.id, icon: 'trash', cls: 'icon-btn danger-txt', title: 'Delete invoice' }) : ''}</div></div></div>
       <div class="grid-31"><div class="card"><table class="tbl"><thead><tr><th>#</th><th>Description</th><th class="num">Qty</th><th class="num">Rate</th><th class="num">Amount</th></tr></thead><tbody>${inv.items.map((it, i) => html`<tr><td>${i + 1}</td><td>${it.desc}</td><td class="num">${it.qty}</td><td class="num">${money(it.rate)}</td><td class="num">${money(it.qty * it.rate)}</td></tr>`)}</tbody></table>
-        <div class="totals"><div>Subtotal <b>${money(t.sub)}</b></div><div>Discount <b>− ${money(t.disc)}</b></div><div>Tax (${inv.taxPct || 0}%) <b>${money(t.tax)}</b></div><div class="grand">Total <b>${money(t.total)}</b></div><div>Paid <b>${money(DB.invPaid(inv))}</b></div><div class="grand">Balance <b>${money(DB.invBalance(inv))}</b></div></div>${inv.notes ? html`<p class="muted">${inv.notes}</p>` : ''}</div>
+        <div class="totals"><div>Subtotal <b>${money(t.sub)}</b></div><div>Discount <b>− ${money(t.disc)}</b></div><div>Tax (${inv.taxPct || 0}%) <b>${money(t.tax)}</b></div><div class="grand">Total <b>${money(t.total)}</b></div><div>Paid <b>${money(DB.invPaid(inv))}</b></div></div>${inv.notes ? html`<p class="muted">${inv.notes}</p>` : ''}</div>
       <div class="card"><h3>Payments</h3>${progress(t.total ? DB.invPaid(inv) / t.total * 100 : 0, 'green')}${pays.length ? html`<ul class="list">${pays.map((p) => html`<li class="row-between"><span><b>${money(p.amount)}</b> · ${Lists.name('paymentMethods', p.method)}<br><small class="muted">${p.number} · ${fmtDate(p.date)}${p.ref ? ' · ' + p.ref : ''}</small></span>${btn('', 'pay:receipt', { id: p.id, icon: 'print', cls: 'icon-btn sm', title: 'Receipt' })}</li>`)}</ul>` : html`<p class="muted">No payments yet.</p>`}</div></div>`;
   }
 };
@@ -285,7 +278,7 @@ act('inv:edit', (a) => Invoices.open(invOf(a)));
 act('inv:pay', (a) => Invoices.pay(invOf(a)));
 act('inv:print', (a) => Invoices.printInvoice(invOf(a)));
 act('inv:sent', (a) => { const i = invOf(a); Store.commit(() => { i.status = 'Sent'; }); Auth.audit('edit', 'invoices', `${i.number} marked as sent`, { recordId: i.id, old: { status: 'Draft' }, new: { status: 'Sent' } }); toast('Marked as sent'); });
-act('inv:wa', (a) => { const i = invOf(a); const c = DB.client(i.clientId); const tpl = { title: `invoice ${i.number} (balance ${money(DB.invBalance(i))})`, due: i.due }; Contact.compose('whatsapp', c, tpl); });
+act('inv:wa', (a) => { const i = invOf(a); const c = DB.client(i.clientId); const tpl = { title: `invoice ${i.number} (${money(DB.invTotal(i).total)})`, due: i.due }; Contact.compose('whatsapp', c, tpl); });
 act('inv:del', async (a) => {
   const i = invOf(a); const p = Store.s.payments.filter((x) => x.invoiceId === i.id);
   if (!(await confirmDlg(html`Delete invoice <b>${i.number}</b>${p.length ? html` and its ${p.length} payment(s)` : ''}?`, { danger: true, ok: 'Delete' }))) return;
@@ -296,8 +289,8 @@ act('inv:del', async (a) => {
   toast(`Invoice ${i.number} deleted`, 'ok', { undo: () => { Store.commit((s) => { s.invoices.splice(Math.min(idx, s.invoices.length), 0, i); s.payments.push(...p); }); Auth.audit('restore', 'invoices', `Undo delete: ${i.number}`, { recordId: i.id }); toast('Restored'); } });
 });
 act('inv:export', () => {
-  const rows = Auth.byClient(Store.s.invoices); const H = ['Invoice', 'Client', 'Code', 'Date', 'Due', 'Subtotal', 'Discount', 'Tax', 'Total', 'Paid', 'Balance', 'Status'];
-  downloadFile('invoices.csv', toCSV(H, rows.map((i) => { const c = DB.client(i.clientId) || {}; const t = DB.invTotal(i); return [i.number, c.name, c.code, i.date, i.due, t.sub, t.disc, t.tax, t.total, DB.invPaid(i), DB.invBalance(i), DB.invStatus(i)]; })), 'text/csv');
+  const rows = Auth.byClient(Store.s.invoices); const H = ['Invoice', 'Client', 'Code', 'Date', 'Due', 'Subtotal', 'Discount', 'Tax', 'Total', 'Paid', 'Status'];
+  downloadFile('invoices.csv', toCSV(H, rows.map((i) => { const c = DB.client(i.clientId) || {}; const t = DB.invTotal(i); return [i.number, c.name, c.code, i.date, i.due, t.sub, t.disc, t.tax, t.total, DB.invPaid(i), DB.invStatus(i)]; })), 'text/csv');
   Auth.audit('export', 'invoices', `Exported ${rows.length} invoices`);
 });
 act('inv:statement', (a) => {
@@ -306,7 +299,7 @@ act('inv:statement', (a) => {
 });
 act('pay:receipt', (a) => {
   const p = Store.s.payments.find((x) => x.id === a.dataset.id); const i = DB.invoice(p.invoiceId) || {}; const c = DB.client(p.clientId) || {};
-  printHTML(`Receipt ${p.number}`, html`<div class="invoice-print">${printHeader('PAYMENT RECEIPT')}${kv([['Receipt no.', p.number], ['Date', fmtDate(p.date)], ['Received from', `${c.name || ''} (${c.code || ''})`], ['Amount', money(p.amount)], ['Method', Lists.name('paymentMethods', p.method)], ['Reference', p.ref], ['Against invoice', i.number], ['Invoice balance after payment', i.id ? money(DB.invBalance(i)) : '']])}<div class="p-sign">Authorised signature</div><div class="p-foot">${printFooter()}</div></div>`);
+  printHTML(`Receipt ${p.number}`, html`<div class="invoice-print">${printHeader('PAYMENT RECEIPT')}${kv([['Receipt no.', p.number], ['Date', fmtDate(p.date)], ['Received from', `${c.name || ''} (${c.code || ''})`], ['Amount', money(p.amount)], ['Method', Lists.name('paymentMethods', p.method)], ['Reference', p.ref], ['Against invoice', i.number]])}<div class="p-sign">Authorised signature</div><div class="p-foot">${printFooter()}</div></div>`);
 });
 act('pay:del', async (a) => { const p = Store.s.payments.find((x) => x.id === a.dataset.id); if (await confirmDlg(`Delete payment ${p.number} of ${money(p.amount)}?`, { danger: true, ok: 'Delete' })) Rec.remove('payments', p, `Payment ${p.number}`, 'invoices'); });
 act('exp:new', () => Expenses.open());

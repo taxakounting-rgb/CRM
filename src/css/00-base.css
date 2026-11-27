@@ -253,11 +253,11 @@ details.diff{font-size:12px;color:var(--muted);margin-top:3px}details.diff summa
   @page{margin:14mm}
 }
 #print-area{color:#111;background:#fff;font-family:Arial,Helvetica,sans-serif}
-.p-head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #D62828;padding-bottom:10px;margin-bottom:14px}
+.p-head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid var(--print-accent,#111);-webkit-print-color-adjust:exact;print-color-adjust:exact;padding-bottom:10px;margin-bottom:14px}
 .p-logo{width:150px;height:auto;color:#111}.p-head img.p-logo{max-height:110px;object-fit:contain}.p-co{text-align:right;font-size:12px;line-height:1.5}.p-title{font-size:20px;margin:6px 0;letter-spacing:.05em}.p-sub{color:#555;font-size:11.5px}
-.ptbl{width:100%;border-collapse:collapse;margin:10px 0 16px;font-size:12px}.ptbl th{background:#111;color:#fff;text-align:left;padding:6px 8px;-webkit-print-color-adjust:exact;print-color-adjust:exact}.ptbl td{padding:6px 8px;border-bottom:1px solid #ddd}.ptbl .num{text-align:right}.ptbl.small{font-size:10px}
-.ptot{margin-left:auto;border-collapse:collapse;min-width:280px;font-size:13px}.ptot td{padding:5px 8px}.ptot td:last-child{text-align:right}.ptot tr.g td{font-weight:700;border-top:2px solid #111}
-.inv-meta{display:flex;justify-content:space-between;gap:20px;margin:10px 0 6px}.inv-meta small{display:block;color:#D62828;font-weight:700;letter-spacing:.08em}.meta-t td{padding:2px 6px}
+.ptbl{width:100%;border-collapse:collapse;margin:10px 0 16px;font-size:12px}.ptbl th{background:var(--print-accent,#111);color:var(--print-on,#fff);text-align:left;padding:6px 8px;-webkit-print-color-adjust:exact;print-color-adjust:exact}.ptbl td{padding:6px 8px;border-bottom:1px solid #ddd}.ptbl .num{text-align:right}.ptbl.small{font-size:10px}
+.ptot{margin-left:auto;border-collapse:collapse;min-width:280px;font-size:13px}.ptot td{padding:5px 8px}.ptot td:last-child{text-align:right}.ptot tr.g td{font-weight:700;border-top:2px solid var(--print-accent,#111)}
+.inv-meta{display:flex;justify-content:space-between;gap:20px;margin:10px 0 6px}.inv-meta small{display:block;color:var(--print-accent,#111);font-weight:700;letter-spacing:.08em}.meta-t td{padding:2px 6px}
 .p-terms{font-size:11px;color:#444;border-top:1px solid #ddd;padding-top:8px;margin-top:10px;white-space:pre-wrap}.p-foot{text-align:center;font-size:10.5px;color:#666;margin-top:24px;border-top:1px solid #ddd;padding-top:8px}
 .p-sign{margin:50px 0 0 auto;width:220px;border-top:1px solid #111;text-align:center;padding-top:4px;font-size:11px}
 #print-area .kv{grid-template-columns:180px 1fr}#print-area .kv dt{color:#555}#print-area .badge{background:#eee;color:#111}
@@ -380,24 +380,26 @@ input[type=color]{height:38px;min-width:56px;padding:3px;cursor:pointer}
 
 /* ======================= INVOICE PRINT (improved) ======================= */
 .inv-bill-to{font-size:12.5px;line-height:1.6}
-.inv-label{font-size:9px;font-weight:800;letter-spacing:.12em;color:#c0392b;margin-bottom:3px}
+.inv-label{font-size:9px;font-weight:800;letter-spacing:.12em;color:var(--print-accent,#111);margin-bottom:3px}
 .inv-client-name{font-size:15px;font-weight:700;margin-bottom:2px}
 .inv-addr{color:#555;font-size:11.5px}
 .inv-details-box{min-width:220px}
 .inv-detail-t td{padding:4px 8px;font-size:12px;border-bottom:1px dotted #e5e5e5}
 .inv-detail-t td:first-child{color:#666;white-space:nowrap}
 .inv-detail-t td:last-child{text-align:right;font-weight:500}
-.inv-balance-row td{background:#fef3c7;font-weight:800!important;color:#92400e!important}
-.inv-items thead tr{background:#1a1a2e;color:#fff}
+.inv-items thead tr{background:var(--print-accent,#1a1a2e);color:var(--print-on,#fff);-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .inv-items thead th{padding:8px 10px!important;font-size:11.5px;letter-spacing:.04em}
 .inv-items tbody tr:nth-child(even){background:#f9f9f9}
 .inv-bottom{display:flex;justify-content:space-between;gap:20px;margin:16px 0}
-.inv-notes-box{flex:1;font-size:12px;color:#555;padding:12px;background:#f8f8f8;border-radius:6px;border-left:3px solid #1a1a2e;white-space:pre-line}
+.inv-notes-box{flex:1;font-size:12px;color:#555;padding:12px;background:#f8f8f8;border-radius:6px;border-left:3px solid var(--print-accent,#1a1a2e);white-space:pre-line}
 .inv-totals{min-width:260px}.inv-totals td{padding:6px 10px}
-.inv-totals .total-row td{background:#1a1a2e;color:#fff;font-size:14px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-.inv-totals .balance-row td{background:#c0392b;color:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.inv-totals .total-row td{background:var(--print-accent,#1a1a2e);color:var(--print-on,#fff);font-size:14px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .inv-totals .paid-row td{background:#e8f5e9;color:#1b5e20!important;font-weight:700}
-.inv-totals .disc{color:#c0392b}
+.inv-totals .disc{color:#555}
 .inv-payments{margin:12px 0;font-size:12px}.inv-payments b{display:block;margin-bottom:6px;font-size:12.5px}
-.inv-sign-row{display:flex;justify-content:space-between;margin:40px 0 16px;gap:40px}
-.inv-sign-box{flex:1;text-align:center}.inv-sign-line{border-top:1px solid #333;margin-bottom:6px}.inv-sign-box small{font-size:10.5px;color:#666}
+/* Credentials vault: typed credentials */
+.vsec{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:1px 0}.vsec>small{min-width:96px;font-size:11px}.vsec.nw{flex-wrap:nowrap}.vsec.nw .cd{white-space:nowrap}
+.ct-list{display:grid;gap:8px}.ct-item{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px}
+.ct-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}.ct-chip{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:2px 8px;border-radius:99px;background:var(--brand-soft)}.ct-chip svg{width:11px;height:11px}
+.ct-row{display:grid;grid-template-columns:1fr 170px auto auto;gap:8px;align-items:center;margin-bottom:8px}
+@media(max-width:640px){.ct-row{grid-template-columns:1fr 1fr}}

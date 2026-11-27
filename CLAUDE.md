@@ -31,3 +31,7 @@ A complete, dynamic CRM as ONE offline HTML file for any company (agency, accoun
 - `api/sync.js` (Vercel function + Upstash Redis; env KV_REST_API_URL/TOKEN, CRM_SECRET). Keys: crm:co:<companyId> -> {ws, salt, h2}; crm:state:<ws>; crm:meta:<ws>; crm:blob:<ws>:<vid>.
 - `src/js/22-cloud.js`: company account, versioned whole-state sync (conflict = newer cloud copy wins, local snapshot kept), document files in cloud (max 3 MB), local browser copy is only a cache.
 - No backup/restore/auto-save-file UI (removed on purpose). Tests: `node scripts/cloud-test.mjs`, `node scripts/dev-server.mjs` + `python3 scripts/e2e-cloud.py`.
+
+## Credentials Vault & invoice print (latest)
+- Vault credentials are typed: `settings.credTypes` (starter set in `DEFAULT_CRED_TYPES`, editable in Vault > Credential types). Each type = list of fields (text/email/url/password/PIN); password + PIN fields are always AES-GCM encrypted. Records keep `typeId`, `layout` (field snapshot), `fields`, `secrets`. Old records (portal/username/secret/extra) are upgraded on the fly by `Vault.upgrade()`.
+- Printed documents use `--print-accent` = dominant colour of the company logo (`Brand.printColor()`, cached in `company.logoColor`; falls back to the theme brand colour). Invoices have no signature block and no "Balance Due".

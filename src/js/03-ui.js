@@ -397,11 +397,19 @@ function downloadFile(name, content, type = 'text/plain') {
 function toCSV(headers, rows) { const q = (v) => { v = v === null || v === undefined ? '' : String(v); if (/^[=+\-@]/.test(v)) v = "'" + v; return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }; return '﻿' + [headers.map(q).join(','), ...rows.map((r) => r.map(q).join(','))].join('\r\n'); }
 function toXLS(title, headers, rows) { return `<html xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="UTF-8"></head><body><table border="1"><caption>${esc(title)}</caption><tr>${headers.map((h) => `<th style="background:#111;color:#fff">${esc(h)}</th>`).join('')}</tr>${rows.map((r) => `<tr>${r.map((c) => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</table></body></html>`; }
 function printHTML(title, bodyHTML) {
-  const area = $('#print-area'); area.innerHTML = String(bodyHTML); document.title = title;
-  document.body.classList.add('printing');
-  const done = () => { document.body.classList.remove('printing'); area.innerHTML = ''; document.title = Brand.appName(); window.removeEventListener('afterprint', done); };
-  window.addEventListener('afterprint', done);
-  setTimeout(() => { window.print(); setTimeout(() => { if (document.body.classList.contains('printing') && !window.matchMedia('print').matches) done(); }, 1500); }, 60);
+  const area = $('#print-area');
+  const go = () => {
+    const acc = Brand.printColor();
+    area.style.setProperty('--print-accent', acc);
+    area.style.setProperty('--print-on', (typeof Theme !== 'undefined' && Theme.onColor) ? Theme.onColor(acc) : '#ffffff');
+    area.innerHTML = String(bodyHTML); document.title = title;
+    document.body.classList.add('printing');
+    const done = () => { document.body.classList.remove('printing'); area.innerHTML = ''; document.title = Brand.appName(); window.removeEventListener('afterprint', done); };
+    window.addEventListener('afterprint', done);
+    setTimeout(() => { window.print(); setTimeout(() => { if (document.body.classList.contains('printing') && !window.matchMedia('print').matches) done(); }, 1500); }, 60);
+  };
+  const co = Brand.company();
+  if (co.logo && co.logoColor === undefined) Brand.syncLogoColor().then(go, go); else go();
 }
 function printFooter() { const c = Store.s.settings.company || {}; return [c.name, c.phone, c.website].filter(Boolean).join('  |  '); }
 function printHeader(title, sub = '') {
