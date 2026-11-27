@@ -62,6 +62,7 @@ const Seed = {
   },
   async ensure() {
     const s = Store.s;
+    Accounts.ensure();
     if (!s.users.length) {
       // Brand-new company: defaults only. The Setup Wizard creates the company profile and the admin user.
       if (!s.roles.length) Object.assign(s, { lists: this.lists(), roles: this.roles(), settings: this.settings(), compliance: [] });

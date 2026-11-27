@@ -107,7 +107,7 @@ const Store = {
       counters: { client: {}, task: 0, emp: 0, inv: 0, doc: 0, pay: 0, exp: 0, rcpt: 0, prj: 0 },
       settings: {}, lists: {}, roles: [], users: [],
       clients: [], team: [], tasks: [], services: [], filings: {}, compliance: [],
-      invoices: [], payments: [], expenses: [], projects: [], documents: [], creds: [], notes: [],
+      invoices: [], payments: [], accounts: [], expenses: [], projects: [], documents: [], creds: [], notes: [],
       timeline: [], followups: [], notifications: [], audit: [], savedFilters: [], reportTemplates: [], deleted: []
     };
   },

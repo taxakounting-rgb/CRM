@@ -408,3 +408,12 @@ input[type=color]{height:38px;min-width:56px;padding:3px;cursor:pointer}
 /* ===== Searchable client picker (invoice form) ===== */
 .cpick{position:relative}.cpick-list{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:30;max-height:240px;overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow-lg)}
 .cpick-it{padding:9px 12px;cursor:pointer;border-bottom:1px solid var(--line2)}.cpick-it:last-child{border-bottom:0}.cpick-it.on,.cpick-it:hover{background:var(--brand-soft)}.cpick-empty{padding:12px;color:var(--muted)}
+
+/* Accounts (cash in hand / bank) */
+.acc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:16px}
+.acc-card{display:flex;flex-direction:column;gap:2px;text-align:left;background:var(--surface);color:var(--text);border:1.5px solid var(--line);border-radius:var(--r);padding:14px 16px;cursor:pointer;box-shadow:var(--shadow);font:inherit}
+.acc-card small{color:var(--muted);font-weight:600}.acc-card .acc-name{font-weight:600}.acc-card b{font-size:20px;margin-top:4px}
+.acc-card:hover{border-color:var(--brand)}.acc-card.on{border-color:var(--brand);box-shadow:0 0 0 2px var(--brand-soft,rgba(42,120,214,.18))}
+.acc-card.add{align-items:center;justify-content:center;flex-direction:row;gap:8px;border-style:dashed;color:var(--brand);font-weight:600;box-shadow:none}
+.acc-note{display:flex;align-items:center;gap:12px;justify-content:space-between;margin-bottom:12px;padding:10px 16px}
+.pos-txt{color:var(--green,#1baf7a);font-weight:600}

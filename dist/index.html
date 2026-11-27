@@ -418,6 +418,15 @@ input[type=color]{height:38px;min-width:56px;padding:3px;cursor:pointer}
 .cpick{position:relative}.cpick-list{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:30;max-height:240px;overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow-lg)}
 .cpick-it{padding:9px 12px;cursor:pointer;border-bottom:1px solid var(--line2)}.cpick-it:last-child{border-bottom:0}.cpick-it.on,.cpick-it:hover{background:var(--brand-soft)}.cpick-empty{padding:12px;color:var(--muted)}
 
+/* Accounts (cash in hand / bank) */
+.acc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:16px}
+.acc-card{display:flex;flex-direction:column;gap:2px;text-align:left;background:var(--surface);color:var(--text);border:1.5px solid var(--line);border-radius:var(--r);padding:14px 16px;cursor:pointer;box-shadow:var(--shadow);font:inherit}
+.acc-card small{color:var(--muted);font-weight:600}.acc-card .acc-name{font-weight:600}.acc-card b{font-size:20px;margin-top:4px}
+.acc-card:hover{border-color:var(--brand)}.acc-card.on{border-color:var(--brand);box-shadow:0 0 0 2px var(--brand-soft,rgba(42,120,214,.18))}
+.acc-card.add{align-items:center;justify-content:center;flex-direction:row;gap:8px;border-style:dashed;color:var(--brand);font-weight:600;box-shadow:none}
+.acc-note{display:flex;align-items:center;gap:12px;justify-content:space-between;margin-bottom:12px;padding:10px 16px}
+.pos-txt{color:var(--green,#1baf7a);font-weight:600}
+
 </style>
 </head>
 <body>
@@ -534,7 +543,7 @@ const Store = {
       counters: { client: {}, task: 0, emp: 0, inv: 0, doc: 0, pay: 0, exp: 0, rcpt: 0, prj: 0 },
       settings: {}, lists: {}, roles: [], users: [],
       clients: [], team: [], tasks: [], services: [], filings: {}, compliance: [],
-      invoices: [], payments: [], expenses: [], projects: [], documents: [], creds: [], notes: [],
+      invoices: [], payments: [], accounts: [], expenses: [], projects: [], documents: [], creds: [], notes: [],
       timeline: [], followups: [], notifications: [], audit: [], savedFilters: [], reportTemplates: [], deleted: []
     };
   },
@@ -3229,15 +3238,16 @@ const Invoices = {
     formModal({
       title: `Record payment · ${inv.number}`, size: 'md', submit: 'Save payment',
       intro: html`<p>Invoice total <b>${money(DB.invTotal(inv).total)}</b> · paid <b>${money(DB.invPaid(inv))}</b></p>`,
-      fields: [{ name: 'amount', label: `Amount (${curCode()})`, type: 'money', required: true, min: 1, validate: (v) => v > bal ? `Amount is more than the unpaid amount (${money(bal)})` : '' }, { name: 'date', label: 'Payment date', type: 'date', required: true }, { name: 'method', label: 'Method', type: 'select', list: 'paymentMethods', required: true }, { name: 'ref', label: 'Reference / transaction ID' }, { name: 'notes', label: 'Notes', type: 'textarea', full: true, rows: 2 }],
-      values: { amount: bal, date: today(), method: (Lists.all('paymentMethods')[0] || {}).id },
+      fields: [{ name: 'amount', label: `Amount (${curCode()})`, type: 'money', required: true, min: 1, validate: (v) => v > bal ? `Amount is more than the unpaid amount (${money(bal)})` : '' }, { name: 'date', label: 'Payment date', type: 'date', required: true }, { name: 'method', label: 'Method', type: 'select', list: 'paymentMethods', required: true }, { name: 'accountId', label: 'Deposit to', type: 'select', options: () => Accounts.opts(), required: true, placeholder: '— Cash in Hand or bank account —', help: 'The received amount is added to this account balance.' }, { name: 'ref', label: 'Reference / transaction ID' }, { name: 'notes', label: 'Notes', type: 'textarea', full: true, rows: 2 }],
+      values: { amount: bal, date: today(), method: (Lists.all('paymentMethods')[0] || {}).id, accountId: Accounts.CASH },
       onSubmit: (v) => {
         const p = Rec.stamp(Object.assign({ id: uid('p'), invoiceId: inv.id, clientId: inv.clientId }, v), true);
-        Store.commit((s) => { p.number = Store.next('rcpt'); if (inv.status === 'Draft') inv.status = 'Sent'; s.payments.push(p); Timeline.add(inv.clientId, 'payment', `Payment ${money(v.amount)} received for ${inv.number} (${Lists.name('paymentMethods', v.method)})${DB.invBalance(inv) === 0 ? ' — invoice paid' : ''}`); });
-        Auth.audit('create', 'invoices', `Payment ${p.number} ${money(v.amount)} for ${inv.number}`, { recordId: inv.id, new: v });
-        toast(DB.invBalance(inv) === 0 ? `${inv.number} is now fully paid` : 'Partial payment recorded');
+        Store.commit((s) => { p.number = Store.next('rcpt'); if (inv.status === 'Draft') inv.status = 'Sent'; s.payments.push(p); Timeline.add(inv.clientId, 'payment', `Payment ${money(v.amount)} received for ${inv.number} (${Lists.name('paymentMethods', v.method)}) into ${Accounts.name(v.accountId)}${DB.invBalance(inv) === 0 ? ' — invoice paid' : ''}`); });
+        Auth.audit('create', 'invoices', `Payment ${p.number} ${money(v.amount)} for ${inv.number} deposited to ${Accounts.name(v.accountId)}`, { recordId: inv.id, new: v });
+        toast((DB.invBalance(inv) === 0 ? `${inv.number} is now fully paid` : 'Partial payment recorded') + ` · added to ${Accounts.name(v.accountId)}`);
       }
     });
+    setTimeout(() => Accounts.linkMethod(), 0);
   },
   table(rows, key) {
     return dataTable(key, {
@@ -3263,7 +3273,7 @@ const Invoices = {
         { key: 'inv', label: 'Invoice', get: (p) => (DB.invoice(p.invoiceId) || {}).number, render: (p) => { const i = DB.invoice(p.invoiceId); return i ? html`<a href="#/invoices/${i.number}">${i.number}</a>` : '—'; } },
         { key: 'client', label: 'Client', get: (p) => (DB.client(p.clientId) || {}).name, render: (p) => (DB.client(p.clientId) || {}).name || '—' },
         { key: 'method', label: 'Method', get: (p) => Lists.name('paymentMethods', p.method), render: (p) => Lists.name('paymentMethods', p.method) },
-        { key: 'ref', label: 'Reference' }, { key: 'amount', label: 'Amount', cls: 'num', get: (p) => Number(p.amount), render: (p) => html`<b>${money(p.amount)}</b>` },
+        { key: 'acc', label: 'Deposited to', get: (p) => Accounts.name(p.accountId), render: (p) => p.accountId ? Accounts.name(p.accountId) : html`<span class="muted">—</span>` }, { key: 'ref', label: 'Reference' }, { key: 'amount', label: 'Amount', cls: 'num', get: (p) => Number(p.amount), render: (p) => html`<b>${money(p.amount)}</b>` },
         { key: 'a', label: '', sort: false, cls: 'act', render: (p) => html`<div class="row-acts">${btn('', 'pay:receipt', { id: p.id, icon: 'print', cls: 'icon-btn sm', title: 'Print receipt' })}${Auth.can('invoices', 'delete') ? btn('', 'pay:del', { id: p.id, icon: 'trash', cls: 'icon-btn sm', title: 'Delete payment' }) : ''}</div>` }
       ]
     });
@@ -3354,11 +3364,14 @@ Views.invoices = {
     const k = { billed: sum(invs.filter((i) => monthKey(i.date) === mk && !['Draft', 'Cancelled'].includes(i.status)), (i) => DB.invTotal(i).total), received: sum(pays.filter((p) => monthKey(p.date) === mk), (p) => p.amount), outstanding: sum(invs.filter((i) => !['Draft', 'Cancelled'].includes(DB.invStatus(i))), (i) => DB.invBalance(i)), overdue: invs.filter((i) => DB.invStatus(i) === 'Overdue').length };
     const tabs = [['invoices', 'Invoices', invs.length], ['payments', 'Payments', pays.length], ['aging', 'Receivables aging'], ['ledger', 'Client ledger']];
     if (!Auth.assignedOnly() && License.has('expenses')) tabs.push(['expenses', 'Expenses'], ['profit', 'Revenue & profit']);
+    if (!Auth.assignedOnly()) tabs.splice(2, 0, ['accounts', 'Accounts']);
     if ((f.tab === 'expenses' || f.tab === 'profit') && !License.has('expenses')) f.tab = 'invoices';
     let body = '';
     if (f.tab === 'payments') {
       const rows = pays.filter((p) => { const c = DB.client(p.clientId) || {}; return textMatch(f.q, c.name, c.code, p.number, p.ref) && (!f.method || p.method === f.method) && inRange(p.date, f.from, f.to); });
       body = html`<div class="card filters">${fInput('invoices.q', 'Search client, receipt, reference…')}${fSelect('invoices.method', 'All methods', listOpts('paymentMethods'))}${fDate('invoices.from', 'From')}${fDate('invoices.to', 'To')}<span class="grow"></span><b>Total ${money(sum(rows, (p) => p.amount))}</b></div><div class="card p0">${Invoices.payTable(rows, 'payments')}</div>`;
+    } else if (f.tab === 'accounts' && !Auth.assignedOnly()) {
+      body = Accounts.render();
     } else if (f.tab === 'aging') {
       const rows = Invoices.aging(invs); const T = (k2) => sum(rows, (r) => r[k2]);
       body = html`<div class="kpis sm4">${[['Not yet due', 'cur', 'blue'], ['0–30 days', 'a', 'amber'], ['31–60 days', 'b', 'amber'], ['60+ days', 'c', 'red']].map(([l, k2]) => html`<div class="kpi"><small>${l}</small><b>${money(T(k2))}</b></div>`)}</div>
@@ -3390,7 +3403,7 @@ Views.invoices = {
       <div class="row-acts">${canEdit && DB.invBalance(inv) > 0 && st !== 'Cancelled' ? btn('Record payment', 'inv:pay', { id: inv.id, cls: 'primary', icon: 'invoices' }) : ''}${canEdit && inv.status === 'Draft' ? btn('Mark as sent', 'inv:sent', { id: inv.id, cls: 'ghost' }) : ''}${btn('Print / PDF', 'inv:print', { id: inv.id, icon: 'print', cls: 'ghost' })}${btn('Email', 'inv:email', { id: inv.id, icon: 'mail', cls: 'ghost' })}${btn('Reminder', 'inv:wa', { id: inv.id, icon: 'wa', cls: 'wa' })}${canEdit ? btn('Edit', 'inv:edit', { id: inv.id, icon: 'edit', cls: 'ghost' }) : ''}${Auth.can('invoices', 'delete') ? btn('', 'inv:del', { id: inv.id, icon: 'trash', cls: 'icon-btn danger-txt', title: 'Delete invoice' }) : ''}</div></div></div>
       <div class="grid-31"><div class="card"><table class="tbl"><thead><tr><th>#</th><th>Description</th><th class="num">Qty</th><th class="num">Rate</th><th class="num">Amount</th></tr></thead><tbody>${inv.items.map((it, i) => html`<tr><td>${i + 1}</td><td>${it.desc}</td><td class="num">${it.qty}</td><td class="num">${money(it.rate)}</td><td class="num">${money(it.qty * it.rate)}</td></tr>`)}</tbody></table>
         <div class="totals"><div>Subtotal <b>${money(t.sub)}</b></div><div>Discount <b>− ${money(t.disc)}</b></div><div>Tax (${inv.taxPct || 0}%) <b>${money(t.tax)}</b></div><div class="grand">Total <b>${money(t.total)}</b></div><div>Paid <b>${money(DB.invPaid(inv))}</b></div></div>${inv.notes ? html`<p class="muted">${inv.notes}</p>` : ''}</div>
-      <div class="card"><h3>Payments</h3>${progress(t.total ? DB.invPaid(inv) / t.total * 100 : 0, 'green')}${pays.length ? html`<ul class="list">${pays.map((p) => html`<li class="row-between"><span><b>${money(p.amount)}</b> · ${Lists.name('paymentMethods', p.method)}<br><small class="muted">${p.number} · ${fmtDate(p.date)}${p.ref ? ' · ' + p.ref : ''}</small></span>${btn('', 'pay:receipt', { id: p.id, icon: 'print', cls: 'icon-btn sm', title: 'Receipt' })}</li>`)}</ul>` : html`<p class="muted">No payments yet.</p>`}</div></div>`;
+      <div class="card"><h3>Payments</h3>${progress(t.total ? DB.invPaid(inv) / t.total * 100 : 0, 'green')}${pays.length ? html`<ul class="list">${pays.map((p) => html`<li class="row-between"><span><b>${money(p.amount)}</b> · ${Lists.name('paymentMethods', p.method)}${p.accountId ? ' → ' + Accounts.name(p.accountId) : ''}<br><small class="muted">${p.number} · ${fmtDate(p.date)}${p.ref ? ' · ' + p.ref : ''}</small></span>${btn('', 'pay:receipt', { id: p.id, icon: 'print', cls: 'icon-btn sm', title: 'Receipt' })}</li>`)}</ul>` : html`<p class="muted">No payments yet.</p>`}</div></div>`;
   }
 };
 
@@ -3399,7 +3412,7 @@ const Expenses = {
   open(x) {
     formModal({
       title: x ? 'Edit expense' : 'Add expense', size: 'md',
-      fields: [{ name: 'date', label: 'Date', type: 'date', required: true }, { name: 'category', label: 'Category', type: 'select', list: 'expenseCategories', required: true }, { name: 'amount', label: `Amount (${curCode()})`, type: 'money', required: true, min: 1 }, { name: 'payee', label: 'Paid to' }, { name: 'method', label: 'Method', type: 'select', list: 'paymentMethods' }, { name: 'branch', label: 'Branch', type: 'select', list: 'branches' }, { name: 'notes', label: 'Notes', type: 'textarea', full: true, rows: 2 }],
+      fields: [{ name: 'date', label: 'Date', type: 'date', required: true }, { name: 'category', label: 'Category', type: 'select', list: 'expenseCategories', required: true }, { name: 'amount', label: `Amount (${curCode()})`, type: 'money', required: true, min: 1 }, { name: 'payee', label: 'Paid to' }, { name: 'method', label: 'Method', type: 'select', list: 'paymentMethods' }, { name: 'accountId', label: 'Paid from (optional)', type: 'select', options: () => Accounts.opts(), placeholder: '— Not tracked —', help: 'Deducts the amount from this account balance.' }, { name: 'branch', label: 'Branch', type: 'select', list: 'branches' }, { name: 'notes', label: 'Notes', type: 'textarea', full: true, rows: 2 }],
       values: x ? clone(x) : { date: today(), branch: (Lists.all('branches')[0] || {}).id },
       onSubmit: (v) => {
         if (x) { Store.commit(() => { Object.assign(x, v); Rec.stamp(x); }); Auth.audit('edit', 'invoices', `Expense ${x.number} edited`, { recordId: x.id }); }
@@ -3413,7 +3426,7 @@ const Expenses = {
     const f = vs('invoices');
     const rows = this.list().filter((e) => textMatch(f.eq, e.payee, e.notes, Lists.name('expenseCategories', e.category)) && (!f.ecat || e.category === f.ecat) && inRange(e.date, f.efrom, f.eto));
     return html`<div class="card filters">${fInput('invoices.eq', 'Search payee, notes…')}${fSelect('invoices.ecat', 'All categories', listOpts('expenseCategories'))}${fDate('invoices.efrom', 'From')}${fDate('invoices.eto', 'To')}<span class="grow"></span><b>Total ${money(sum(rows, (e) => e.amount))}</b></div>
-      <div class="card p0">${dataTable('expenses', { rows, empty: emptyState('No expenses recorded'), cols: [{ key: 'number', label: 'No.', render: (e) => html`<code>${e.number}</code>` }, { key: 'date', label: 'Date', render: (e) => fmtDate(e.date) }, { key: 'category', label: 'Category', get: (e) => Lists.name('expenseCategories', e.category), render: (e) => Lists.name('expenseCategories', e.category) }, { key: 'payee', label: 'Paid to' }, { key: 'method', label: 'Method', render: (e) => Lists.name('paymentMethods', e.method) }, { key: 'amount', label: 'Amount', cls: 'num', get: (e) => Number(e.amount), render: (e) => html`<b>${money(e.amount)}</b>` }, { key: 'a', label: '', sort: false, cls: 'act', render: (e) => html`<div class="row-acts">${Auth.can('invoices', 'edit') ? btn('', 'exp:edit', { id: e.id, icon: 'edit', cls: 'icon-btn sm', title: 'Edit' }) : ''}${Auth.can('invoices', 'delete') ? btn('', 'exp:del', { id: e.id, icon: 'trash', cls: 'icon-btn sm', title: 'Delete' }) : ''}</div>` }] })}</div>`;
+      <div class="card p0">${dataTable('expenses', { rows, empty: emptyState('No expenses recorded'), cols: [{ key: 'number', label: 'No.', render: (e) => html`<code>${e.number}</code>` }, { key: 'date', label: 'Date', render: (e) => fmtDate(e.date) }, { key: 'category', label: 'Category', get: (e) => Lists.name('expenseCategories', e.category), render: (e) => Lists.name('expenseCategories', e.category) }, { key: 'payee', label: 'Paid to' }, { key: 'method', label: 'Method', render: (e) => Lists.name('paymentMethods', e.method) }, { key: 'acc', label: 'Paid from', get: (e) => Accounts.name(e.accountId), render: (e) => e.accountId ? Accounts.name(e.accountId) : html`<span class="muted">—</span>` }, { key: 'amount', label: 'Amount', cls: 'num', get: (e) => Number(e.amount), render: (e) => html`<b>${money(e.amount)}</b>` }, { key: 'a', label: '', sort: false, cls: 'act', render: (e) => html`<div class="row-acts">${Auth.can('invoices', 'edit') ? btn('', 'exp:edit', { id: e.id, icon: 'edit', cls: 'icon-btn sm', title: 'Edit' }) : ''}${Auth.can('invoices', 'delete') ? btn('', 'exp:del', { id: e.id, icon: 'trash', cls: 'icon-btn sm', title: 'Delete' }) : ''}</div>` }] })}</div>`;
   },
   months(n = 12) { return Array.from({ length: n }, (_, i) => monthKey(addMonths(today().slice(0, 8) + '01', i - n + 1))); },
   profit() {
@@ -3456,7 +3469,7 @@ act('inv:statement', (a) => {
 });
 act('pay:receipt', (a) => {
   const p = Store.s.payments.find((x) => x.id === a.dataset.id); const i = DB.invoice(p.invoiceId) || {}; const c = DB.client(p.clientId) || {};
-  printHTML(`Receipt ${p.number}`, html`<div class="invoice-print">${printHeader('PAYMENT RECEIPT')}${kv([['Receipt no.', p.number], ['Date', fmtDate(p.date)], ['Received from', `${c.name || ''} (${c.code || ''})`], ['Amount', money(p.amount)], ['Method', Lists.name('paymentMethods', p.method)], ['Reference', p.ref], ['Against invoice', i.number]])}<div class="p-sign">Authorised signature</div><div class="p-foot">${printFooter()}</div></div>`);
+  printHTML(`Receipt ${p.number}`, html`<div class="invoice-print">${printHeader('PAYMENT RECEIPT')}${kv([['Receipt no.', p.number], ['Date', fmtDate(p.date)], ['Received from', `${c.name || ''} (${c.code || ''})`], ['Amount', money(p.amount)], ['Method', Lists.name('paymentMethods', p.method)], ['Deposited to', p.accountId ? Accounts.name(p.accountId) : ''], ['Reference', p.ref], ['Against invoice', i.number]])}<div class="p-sign">Authorised signature</div><div class="p-foot">${printFooter()}</div></div>`);
 });
 act('pay:del', async (a) => { const p = Store.s.payments.find((x) => x.id === a.dataset.id); if (await confirmDlg(`Delete payment ${p.number} of ${money(p.amount)}?`, { danger: true, ok: 'Delete' })) Rec.remove('payments', p, `Payment ${p.number}`, 'invoices'); });
 act('exp:new', () => Expenses.open());
@@ -5027,6 +5040,86 @@ act('prj:del', async (a) => {
 });
 
 /* ==========================================================================
+   24-accounts.js — Money accounts: "Cash in Hand" + any number of bank accounts.
+   Every received payment is deposited to one account (payments[].accountId);
+   expenses can optionally be paid from one (expenses[].accountId).
+   Balance = opening balance + payments received - expenses paid.
+   ========================================================================== */
+const Accounts = {
+  CASH: 'acc_cash',
+  ensure() {
+    const s = Store.s; if (!Array.isArray(s.accounts)) s.accounts = [];
+    if (!s.accounts.some((a) => a.id === this.CASH)) s.accounts.unshift({ id: this.CASH, name: 'Cash in Hand', type: 'cash', opening: 0, system: true, createdAt: new Date().toISOString() });
+  },
+  all() { return Store.s.accounts || []; },
+  get(id) { return this.all().find((a) => a.id === id); },
+  name(id) { const a = this.get(id); return a ? a.name : '—'; },
+  opts() { return this.all().map((a) => ({ value: a.id, label: a.type === 'bank' ? `${a.name} (Bank)` : a.name })); },
+  received(a) { return sum(Store.s.payments.filter((p) => p.accountId === a.id), (p) => p.amount); },
+  spent(a) { return sum(Store.s.expenses.filter((e) => e.accountId === a.id), (e) => e.amount); },
+  balance(a) { return (Number(a.opening) || 0) + this.received(a) - this.spent(a); },
+  usage(a) { return Store.s.payments.filter((p) => p.accountId === a.id).length + Store.s.expenses.filter((e) => e.accountId === a.id).length; },
+  unassigned() { return Store.s.payments.filter((p) => !p.accountId); },
+  ledger(a) {
+    const rows = [];
+    if (Number(a.opening)) rows.push({ id: 'open', date: a.createdAt ? new Date(new Date(a.createdAt).getTime() - new Date(a.createdAt).getTimezoneOffset() * 60000).toISOString().slice(0, 10) : today(), ref: '—', desc: 'Opening balance', in: Number(a.opening) > 0 ? Number(a.opening) : 0, out: Number(a.opening) < 0 ? -Number(a.opening) : 0, at: a.createdAt || '' });
+    Store.s.payments.filter((p) => p.accountId === a.id).forEach((p) => { const c = DB.client(p.clientId) || {}; const i = DB.invoice(p.invoiceId) || {}; rows.push({ id: p.id, date: p.date, ref: p.number, desc: `Payment from ${c.name || '—'}${i.number ? ' · ' + i.number : ''} (${Lists.name('paymentMethods', p.method)})`, in: Number(p.amount), out: 0, at: p.createdAt || '' }); });
+    Store.s.expenses.filter((e) => e.accountId === a.id).forEach((e) => rows.push({ id: e.id, date: e.date, ref: e.number, desc: `Expense: ${Lists.name('expenseCategories', e.category)}${e.payee ? ' · ' + e.payee : ''}`, in: 0, out: Number(e.amount), at: e.createdAt || '' }));
+    rows.sort((x, y) => (x.date === y.date ? (x.at > y.at ? 1 : -1) : (x.date > y.date ? 1 : -1)));
+    let bal = 0; rows.forEach((r) => { bal += r.in - r.out; r.bal = bal; });
+    return rows.reverse();
+  },
+  /* In the payment dialog: choosing Cash selects Cash in Hand; any other method selects the first bank account. */
+  linkMethod() {
+    const m = document.querySelector('form [name=method]'), a = document.querySelector('form [name=accountId]'); if (!m || !a) return;
+    m.addEventListener('change', () => {
+      if (/cash/i.test(Lists.name('paymentMethods', m.value))) a.value = this.CASH;
+      else { const bank = this.all().find((x) => x.type === 'bank'); if (bank) a.value = bank.id; }
+    });
+  },
+  open(a) {
+    const isNew = !a;
+    formModal({
+      title: isNew ? 'Add bank account' : `Edit account · ${a.name}`, size: 'md',
+      fields: [
+        { name: 'name', label: 'Account name', required: true, placeholder: 'e.g. HBL Current Account', validate: (v) => this.all().some((x) => x !== a && x.name.toLowerCase() === String(v).toLowerCase()) ? 'An account with this name already exists' : '' },
+        ...(a && a.system ? [] : [{ name: 'type', label: 'Type', type: 'select', required: true, options: [{ value: 'bank', label: 'Bank account' }, { value: 'cash', label: 'Cash' }] }]),
+        { name: 'opening', label: `Opening balance (${curCode()})`, type: 'money', help: 'Money already in this account before you start using the CRM.' },
+        { name: 'notes', label: 'Bank / account details (optional)', type: 'textarea', full: true, rows: 2 }
+      ],
+      values: a ? clone(a) : { type: 'bank', opening: 0 },
+      onSubmit: (v) => {
+        v.opening = Number(v.opening) || 0;
+        if (a) { Store.commit(() => { Object.assign(a, v); Rec.stamp(a); }); Auth.audit('edit', 'invoices', `Account "${a.name}" edited`, { recordId: a.id }); }
+        else { const r = Rec.stamp(Object.assign({ id: uid('acc_') }, v), true); Store.commit((s) => { s.accounts.push(r); }); Auth.audit('create', 'invoices', `Account "${r.name}" added`, { recordId: r.id }); vs('invoices').acc = r.id; }
+        toast('Account saved');
+      }
+    });
+  },
+  render() {
+    const f = vs('invoices'); const list = this.all();
+    const sel = this.get(f.acc) || list[0]; const can = Auth.can('invoices', 'edit');
+    const total = sum(list, (a) => this.balance(a));
+    const un = this.unassigned();
+    const cards = list.map((a) => html`<button type="button" class="acc-card ${sel && sel.id === a.id ? 'on' : ''}" data-vs-set="invoices.acc" data-val="${a.id}"><small>${a.type === 'bank' ? 'Bank account' : 'Cash'}</small><span class="acc-name">${a.name}</span><b class="${this.balance(a) < 0 ? 'late-txt' : ''}">${money(this.balance(a))}</b></button>`);
+    return html`<div class="kpis sm4"><div class="kpi"><small>Total across all accounts</small><b>${money(total)}</b></div><div class="kpi"><small>Cash in hand</small><b>${money(sum(list.filter((a) => a.type === 'cash'), (a) => this.balance(a)))}</b></div><div class="kpi"><small>In bank accounts</small><b>${money(sum(list.filter((a) => a.type === 'bank'), (a) => this.balance(a)))}</b></div></div>
+      ${un.length && can ? html`<div class="card acc-note"><span>${un.length} earlier payment(s) (${money(sum(un, (p) => p.amount))}) have no account.</span>${btn('Put them in Cash in Hand', 'acc:assign', { cls: 'sm ghost' })}</div>` : ''}
+      <div class="acc-grid">${cards}${Auth.can('invoices', 'create') ? html`<button type="button" class="acc-card add" data-act="acc:new">${icon('plus')}<span>Add bank account</span></button>` : ''}</div>
+      ${sel ? html`<div class="card p0"><div class="row-between" style="padding:14px 16px"><h3 style="margin:0">${sel.name} · transactions</h3><span class="row-acts">${can ? btn('Edit', 'acc:edit', { id: sel.id, icon: 'edit', cls: 'sm ghost' }) : ''}${Auth.can('invoices', 'delete') && !sel.system ? btn('', 'acc:del', { id: sel.id, icon: 'trash', cls: 'icon-btn sm danger-txt', title: 'Delete account' }) : ''}</span></div>
+        ${dataTable('acc-ledger', { rows: this.ledger(sel), empty: emptyState('No transactions yet', 'Payments deposited to this account will appear here.'), cols: [{ key: 'date', label: 'Date', render: (r) => fmtDate(r.date) }, { key: 'ref', label: 'Ref', render: (r) => html`<code>${r.ref}</code>` }, { key: 'desc', label: 'Description' }, { key: 'in', label: 'Money in', cls: 'num', render: (r) => r.in ? html`<span class="pos-txt">${money(r.in)}</span>` : '' }, { key: 'out', label: 'Money out', cls: 'num', render: (r) => r.out ? money(r.out) : '' }, { key: 'bal', label: 'Balance', cls: 'num', sort: false, render: (r) => html`<b>${money(r.bal)}</b>` }] })}</div>` : ''}`;
+  }
+};
+act('acc:new', () => Accounts.open());
+act('acc:edit', (a) => Accounts.open(Accounts.get(a.dataset.id)));
+act('acc:assign', () => { const un = Accounts.unassigned(); Store.commit(() => { un.forEach((p) => { p.accountId = Accounts.CASH; }); }); Auth.audit('edit', 'invoices', `${un.length} earlier payment(s) put in Cash in Hand`); toast('Done'); });
+act('acc:del', async (a) => {
+  const acc = Accounts.get(a.dataset.id); if (!acc || acc.system) return;
+  if (Accounts.usage(acc)) { toast(`"${acc.name}" has ${Accounts.usage(acc)} transaction(s) and cannot be deleted`, 'warn'); return; }
+  if (!(await confirmDlg(html`Delete account <b>${acc.name}</b>?`, { danger: true, ok: 'Delete' }))) return;
+  Store.commit((s) => { s.accounts = s.accounts.filter((x) => x.id !== acc.id); }); vs('invoices').acc = ''; Auth.audit('delete', 'invoices', `Account "${acc.name}" deleted`, { recordId: acc.id }); toast('Account deleted');
+});
+
+/* ==========================================================================
    99-boot.js — First-run defaults (generic Master Lists, roles, settings) and
    app start. The first-run Setup Wizard (21-setup.js) creates the company
    profile and the administrator account. Starts EMPTY: no sample data.
@@ -5090,6 +5183,7 @@ const Seed = {
   },
   async ensure() {
     const s = Store.s;
+    Accounts.ensure();
     if (!s.users.length) {
       // Brand-new company: defaults only. The Setup Wizard creates the company profile and the admin user.
       if (!s.roles.length) Object.assign(s, { lists: this.lists(), roles: this.roles(), settings: this.settings(), compliance: [] });

@@ -40,3 +40,6 @@ A complete, dynamic CRM as ONE offline HTML file for any company (agency, accoun
 - Invoice form: Client is a searchable box (`Invoices.bindClientPicker`) — filters by name, code, phone, email, company while typing.
 - `Invoices.email(inv)`: composer (To / Subject / Message) with Open email app (mailto), Gmail, Copy and Print/PDF buttons; optionally marks a Draft as Sent and logs to the client timeline. Buttons: invoice list row + invoice detail page. mailto cannot attach files, so the PDF is saved via Print / PDF and attached by hand.
 - `bindPwToggle(root)` (03-ui.js): every `input[type=password]` in forms and dialogs (vault credentials, Vault PIN setup/change/unlock) gets a show/hide eye button.
+
+## Accounts: Cash in Hand & banks (latest)
+- `src/js/24-accounts.js`: `Store.s.accounts` ({id,name,type cash|bank,opening,notes}); `Cash in Hand` (id `acc_cash`) is seeded by `Accounts.ensure()` and cannot be deleted. Payments store `accountId` (required in the Record payment dialog), expenses store optional `accountId` (Paid from). Balance = opening + payments - expenses (`Accounts.balance`). UI: Invoices & Payments > Accounts tab (balances, add/edit bank account, per-account ledger).
