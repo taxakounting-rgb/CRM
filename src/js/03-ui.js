@@ -108,6 +108,7 @@ function promptDlg(title, label, opts = {}) {
       body: html`<form data-p><label class="fld"><span>${label}</span><input name="v" type="${opts.type || 'text'}" value="${opts.value || ''}" autocomplete="off" ${opts.inputmode ? raw(`inputmode="${opts.inputmode}"`) : ''} required></label>${opts.help ? html`<p class="help">${opts.help}</p>` : ''}<p class="err" data-err></p></form>`,
       foot: html`<button type="button" class="btn ghost" data-close>Cancel</button><button type="button" class="btn primary" data-ok>${opts.ok || 'OK'}</button>`,
       onMount: (el, m) => {
+        bindPwToggle(el);
         const go = async () => {
           const v = el.querySelector('[name=v]').value;
           if (opts.validate) { const e = await opts.validate(v); if (e) { el.querySelector('[data-err]').textContent = e; return; } }
@@ -211,8 +212,22 @@ function formModal({ title, fields, values = {}, submit = 'Save', onSubmit, size
     }
   });
 }
+/* Show / hide toggle for every password input inside a form or dialog (vault passwords, PINs). */
+function bindPwToggle(root) {
+  $$('input[type=password]', root).forEach((inp) => {
+    if (inp.dataset.pwt || inp.closest('.pw-wrap')) return;
+    inp.dataset.pwt = '1';
+    const wrap = document.createElement('div'); wrap.className = 'pw-wrap';
+    inp.parentNode.insertBefore(wrap, inp); wrap.appendChild(inp);
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'icon-btn'; b.setAttribute('aria-label', 'Show password'); b.title = 'Show / hide';
+    b.innerHTML = String(icon('eye'));
+    b.onclick = () => { const show = inp.type === 'password'; inp.type = show ? 'text' : 'password'; b.classList.toggle('on', show); b.setAttribute('aria-label', show ? 'Hide password' : 'Show password'); inp.focus(); };
+    wrap.appendChild(b);
+  });
+}
 /* Image pickers + "add new master list value" inside forms */
 function bindFormExtras(form) {
+  bindPwToggle(form);
   $$('[data-img]', form).forEach((inp) => inp.addEventListener('change', async () => {
     const f = inp.files[0]; if (!f) return; if (f.size > 2 * 1048576) { toast('Image must be under 2 MB', 'warn'); return; }
     const url = await resizeImage(f, 320); const n = inp.dataset.img;

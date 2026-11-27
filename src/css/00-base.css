@@ -404,3 +404,7 @@ input[type=color]{height:38px;min-width:56px;padding:3px;cursor:pointer}
 .ct-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}.ct-chip{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:2px 8px;border-radius:99px;background:var(--brand-soft)}.ct-chip svg{width:11px;height:11px}
 .ct-row{display:grid;grid-template-columns:1fr 170px auto auto;gap:8px;align-items:center;margin-bottom:8px}
 @media(max-width:640px){.ct-row{grid-template-columns:1fr 1fr}}
+
+/* ===== Searchable client picker (invoice form) ===== */
+.cpick{position:relative}.cpick-list{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:30;max-height:240px;overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow-lg)}
+.cpick-it{padding:9px 12px;cursor:pointer;border-bottom:1px solid var(--line2)}.cpick-it:last-child{border-bottom:0}.cpick-it.on,.cpick-it:hover{background:var(--brand-soft)}.cpick-empty{padding:12px;color:var(--muted)}

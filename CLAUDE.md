@@ -35,3 +35,8 @@ A complete, dynamic CRM as ONE offline HTML file for any company (agency, accoun
 ## Credentials Vault & invoice print (latest)
 - Vault credentials are typed: `settings.credTypes` (starter set in `DEFAULT_CRED_TYPES`, editable in Vault > Credential types). Each type = list of fields (text/email/url/password/PIN); password + PIN fields are always AES-GCM encrypted. Records keep `typeId`, `layout` (field snapshot), `fields`, `secrets`. Old records (portal/username/secret/extra) are upgraded on the fly by `Vault.upgrade()`.
 - Printed documents use `--print-accent` = dominant colour of the company logo (`Brand.printColor()`, cached in `company.logoColor`; falls back to the theme brand colour). Invoices have no signature block and no "Balance Due".
+
+## Invoice client search, email, password eye (latest)
+- Invoice form: Client is a searchable box (`Invoices.bindClientPicker`) — filters by name, code, phone, email, company while typing.
+- `Invoices.email(inv)`: composer (To / Subject / Message) with Open email app (mailto), Gmail, Copy and Print/PDF buttons; optionally marks a Draft as Sent and logs to the client timeline. Buttons: invoice list row + invoice detail page. mailto cannot attach files, so the PDF is saved via Print / PDF and attached by hand.
+- `bindPwToggle(root)` (03-ui.js): every `input[type=password]` in forms and dialogs (vault credentials, Vault PIN setup/change/unlock) gets a show/hide eye button.

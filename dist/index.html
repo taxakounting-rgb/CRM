@@ -414,6 +414,10 @@ input[type=color]{height:38px;min-width:56px;padding:3px;cursor:pointer}
 .ct-row{display:grid;grid-template-columns:1fr 170px auto auto;gap:8px;align-items:center;margin-bottom:8px}
 @media(max-width:640px){.ct-row{grid-template-columns:1fr 1fr}}
 
+/* ===== Searchable client picker (invoice form) ===== */
+.cpick{position:relative}.cpick-list{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:30;max-height:240px;overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow-lg)}
+.cpick-it{padding:9px 12px;cursor:pointer;border-bottom:1px solid var(--line2)}.cpick-it:last-child{border-bottom:0}.cpick-it.on,.cpick-it:hover{background:var(--brand-soft)}.cpick-empty{padding:12px;color:var(--muted)}
+
 </style>
 </head>
 <body>
@@ -1066,6 +1070,7 @@ function promptDlg(title, label, opts = {}) {
       body: html`<form data-p><label class="fld"><span>${label}</span><input name="v" type="${opts.type || 'text'}" value="${opts.value || ''}" autocomplete="off" ${opts.inputmode ? raw(`inputmode="${opts.inputmode}"`) : ''} required></label>${opts.help ? html`<p class="help">${opts.help}</p>` : ''}<p class="err" data-err></p></form>`,
       foot: html`<button type="button" class="btn ghost" data-close>Cancel</button><button type="button" class="btn primary" data-ok>${opts.ok || 'OK'}</button>`,
       onMount: (el, m) => {
+        bindPwToggle(el);
         const go = async () => {
           const v = el.querySelector('[name=v]').value;
           if (opts.validate) { const e = await opts.validate(v); if (e) { el.querySelector('[data-err]').textContent = e; return; } }
@@ -1169,8 +1174,22 @@ function formModal({ title, fields, values = {}, submit = 'Save', onSubmit, size
     }
   });
 }
+/* Show / hide toggle for every password input inside a form or dialog (vault passwords, PINs). */
+function bindPwToggle(root) {
+  $$('input[type=password]', root).forEach((inp) => {
+    if (inp.dataset.pwt || inp.closest('.pw-wrap')) return;
+    inp.dataset.pwt = '1';
+    const wrap = document.createElement('div'); wrap.className = 'pw-wrap';
+    inp.parentNode.insertBefore(wrap, inp); wrap.appendChild(inp);
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'icon-btn'; b.setAttribute('aria-label', 'Show password'); b.title = 'Show / hide';
+    b.innerHTML = String(icon('eye'));
+    b.onclick = () => { const show = inp.type === 'password'; inp.type = show ? 'text' : 'password'; b.classList.toggle('on', show); b.setAttribute('aria-label', show ? 'Hide password' : 'Show password'); inp.focus(); };
+    wrap.appendChild(b);
+  });
+}
 /* Image pickers + "add new master list value" inside forms */
 function bindFormExtras(form) {
+  bindPwToggle(form);
   $$('[data-img]', form).forEach((inp) => inp.addEventListener('change', async () => {
     const f = inp.files[0]; if (!f) return; if (f.size > 2 * 1048576) { toast('Image must be under 2 MB', 'warn'); return; }
     const url = await resizeImage(f, 320); const n = inp.dataset.img;
@@ -3065,6 +3084,33 @@ act('cp:del', async (a) => { const x = cpOf(a); if (await confirmDlg(`Delete dea
    net profit. Printable invoice with logo via window.print().
    ========================================================================== */
 const Invoices = {
+  clientLabel(id) { const c = DB.client(id); return c ? `${c.code} · ${c.name}` : ''; },
+  /* Searchable client box: filters while typing (name, code, phone, email, company). */
+  bindClientPicker(box, form) {
+    const q = box.querySelector('[data-cq]'); const hid = box.querySelector('[name=clientId]'); const list = box.querySelector('[data-clist]');
+    let items = []; let idx = 0;
+    const find = (t) => {
+      const w = String(t || '').toLowerCase().split(/\s+/).filter(Boolean);
+      return Auth.clients().filter((c) => { const hay = [c.name, c.code, c.mobile, c.whatsapp, c.email, c.businessName, c.father].join(' ').toLowerCase(); return w.every((x) => hay.includes(x)); }).sort((a, b) => a.name.localeCompare(b.name)).slice(0, 40);
+    };
+    const draw = () => {
+      if (!items.length) { list.innerHTML = String(html`<div class="cpick-empty">${q.value.trim() ? 'No client found' : 'No clients yet'}</div>`); list.hidden = false; return; }
+      list.innerHTML = items.map((c, i) => String(html`<div class="cpick-it ${i === idx ? 'on' : ''}" role="option" data-i="${i}"><b>${c.name}</b><small class="muted"> ${c.code}${c.mobile ? ' · ' + c.mobile : ''}${c.businessName ? ' · ' + c.businessName : ''}</small></div>`)).join(''); list.hidden = false;
+      const on = list.querySelector('.on'); if (on && on.scrollIntoView) on.scrollIntoView({ block: 'nearest' });
+    };
+    const pick = (c) => { hid.value = c.id; q.value = `${c.code} · ${c.name}`; list.hidden = true; const e = form.querySelector('[data-e]'); if (e) e.textContent = ''; };
+    const open = () => { items = find(hid.value && q.value === Invoices.clientLabel(hid.value) ? '' : q.value); idx = 0; draw(); };
+    q.addEventListener('focus', () => { if (hid.value) q.select(); open(); });
+    q.addEventListener('input', () => { hid.value = ''; open(); });
+    q.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowDown') { idx = Math.min(items.length - 1, idx + 1); draw(); e.preventDefault(); }
+      else if (e.key === 'ArrowUp') { idx = Math.max(0, idx - 1); draw(); e.preventDefault(); }
+      else if (e.key === 'Enter') { if (!list.hidden && items[idx]) { pick(items[idx]); } e.preventDefault(); }
+      else if (e.key === 'Escape' && !list.hidden) { list.hidden = true; e.stopPropagation(); }
+    });
+    list.addEventListener('mousedown', (e) => { const it = e.target.closest('.cpick-it'); if (it) { e.preventDefault(); pick(items[+it.dataset.i]); } });
+    q.addEventListener('blur', () => { setTimeout(() => { list.hidden = true; if (!hid.value) q.value = ''; else q.value = Invoices.clientLabel(hid.value); }, 120); });
+  },
   open(inv, preset = {}) {
     const isNew = !inv;
     const defaultTc = ((Store.s.settings.tcTemplates || []).find(t => t.isDefault) || {}).id || '';
@@ -3074,7 +3120,12 @@ const Invoices = {
     Modal.open({
       title: isNew ? 'New invoice' : `Edit ${inv.number}`, size: 'xl',
       body: html`<form class="grid-form" data-inv novalidate>
-        ${fieldHTML({ name: 'clientId', label: 'Client', type: 'select', options: clientOpts, required: true }, v.clientId)}
+        <div class="fld full cpick-fld"><span>Client<b class="req">*</b></span>
+          <div class="cpick" data-cpick>
+            <input class="inp" data-cq type="search" autocomplete="off" placeholder="Type to search client by name, code, phone, company…" aria-label="Search client" value="${v.clientId ? Invoices.clientLabel(v.clientId) : ''}">
+            <input type="hidden" name="clientId" value="${v.clientId || ''}">
+            <div class="cpick-list" data-clist role="listbox" hidden></div>
+          </div></div>
         ${fieldHTML({ name: 'date', label: 'Invoice date', type: 'date', required: true }, v.date)}
         ${fieldHTML({ name: 'due', label: 'Due date', type: 'date', required: true }, v.due)}
         ${fieldHTML({ name: 'status', label: 'Status', type: 'select', options: [{ value: 'Draft', label: 'Draft' }, { value: 'Sent', label: 'Sent / Issued' }, { value: 'Cancelled', label: 'Cancelled' }], required: true }, v.status === 'Cancelled' || v.status === 'Draft' ? v.status : 'Sent')}
@@ -3090,6 +3141,7 @@ const Invoices = {
       foot: html`<button type="button" class="btn ghost" data-close>Cancel</button><button type="button" class="btn primary" data-save>Save invoice</button>`,
       onMount: (el, m) => {
         const form = el.querySelector('[data-inv]'); const tb = el.querySelector('[data-lines]');
+        Invoices.bindClientPicker(el.querySelector('[data-cpick]'), form);
         const read = () => $$('tr', tb).map((tr) => ({ service: $('[data-k=service]', tr).value, desc: $('[data-k=desc]', tr).value.trim(), qty: Number($('[data-k=qty]', tr).value) || 0, rate: Number($('[data-k=rate]', tr).value) || 0 }));
         const recalc = () => {
           const items = read(); $$('tr', tb).forEach((tr, i) => { $('[data-amt]', tr).textContent = money(items[i].qty * items[i].rate); });
@@ -3129,6 +3181,49 @@ const Invoices = {
       }
     });
   },
+  /* Plain-text version of the invoice for e-mail bodies. */
+  emailText(inv) {
+    const c = DB.client(inv.clientId) || {}; const t = DB.invTotal(inv); const paid = DB.invPaid(inv); const co = Store.s.settings.company || {};
+    const L = [`Dear ${c.name || 'Customer'},`, '', `Please find the details of your invoice ${inv.number} below.`, '', `Invoice No: ${inv.number}`, `Invoice Date: ${fmtDate(inv.date)}`, `Due Date: ${fmtDate(inv.due)}`, '', 'Items:'];
+    inv.items.forEach((it, i) => L.push(`${i + 1}. ${it.desc} — ${it.qty} x ${money(it.rate)} = ${money(it.qty * it.rate)}`));
+    L.push('', `Subtotal: ${money(t.sub)}`);
+    if (t.disc) L.push(`Discount: -${money(t.disc)}`);
+    if (inv.taxPct) L.push(`Tax (${inv.taxPct}%): ${money(t.tax)}`);
+    L.push(`TOTAL: ${money(t.total)}`);
+    if (paid > 0) L.push(`Paid: ${money(paid)}`, `Remaining: ${money(Math.max(0, t.total - paid))}`);
+    if (co.bank) L.push('', 'Payment details:', co.bank);
+    if (inv.notes) L.push('', 'Notes:', inv.notes);
+    L.push('', 'Thank you for your business.', '', 'Regards,', co.name || '', [co.phone, co.website].filter(Boolean).join(' | '));
+    return L.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+  },
+  /* E-mail composer: opens the default mail app, Gmail, or copies the text. */
+  email(inv) {
+    const c = DB.client(inv.clientId) || {}; const co = Store.s.settings.company || {};
+    const subj = `Invoice ${inv.number} from ${co.name || 'us'}`;
+    Modal.open({
+      title: `Send invoice ${inv.number} by email`, size: 'md',
+      body: html`<p class="muted sm">Client: <b>${c.name || ''}</b> · ${c.code || ''}</p>
+        <label class="fld"><span>To<b class="req">*</b></span><input data-to type="email" value="${c.email || ''}" placeholder="client@email.com" autocomplete="off"></label>
+        <label class="fld"><span>Subject</span><input data-subj value="${subj}"></label>
+        <label class="fld"><span>Message</span><textarea rows="12" data-body>${Invoices.emailText(inv)}</textarea></label>
+        ${inv.status === 'Draft' ? html`<label class="chk"><input type="checkbox" data-mark checked> <span>Mark invoice as Sent</span></label>` : ''}
+        <p class="help">Email apps cannot attach files automatically. To attach the PDF: click <b>Print / PDF</b>, choose “Save as PDF”, then attach it to the email.</p><p class="err" data-e></p>`,
+      foot: html`<button type="button" class="btn ghost" data-pdf>${icon('print')}<span>Print / PDF</span></button><span class="grow"></span><button type="button" class="btn ghost" data-copy>${icon('copy')}<span>Copy</span></button><button type="button" class="btn ghost" data-gmail>Gmail</button><button type="button" class="btn primary" data-send>${icon('mail')}<span>Open email app</span></button>`,
+      onMount: (el, m) => {
+        const f = () => ({ to: el.querySelector('[data-to]').value.trim(), subj: el.querySelector('[data-subj]').value, body: el.querySelector('[data-body]').value });
+        const check = () => { const v = f(); if (!v.to) { el.querySelector('[data-e]').textContent = 'Enter the client email address.'; return null; } if (Valid.email(v.to)) { el.querySelector('[data-e]').textContent = Valid.email(v.to); return null; } el.querySelector('[data-e]').textContent = ''; return v; };
+        const done = (how) => {
+          const mk = el.querySelector('[data-mark]');
+          Store.commit(() => { if (mk && mk.checked && inv.status === 'Draft') inv.status = 'Sent'; Timeline.add(inv.clientId, 'invoice', `Invoice ${inv.number} emailed to ${f().to}`); });
+          Auth.audit('export', 'invoices', `Invoice ${inv.number} emailed (${how}) to ${f().to}`, { recordId: inv.id });
+        };
+        el.querySelector('[data-send]').onclick = () => { const v = check(); if (!v) return; location.href = 'mailto:' + encodeURIComponent(v.to) + '?subject=' + encodeURIComponent(v.subj) + '&body=' + encodeURIComponent(v.body); done('mail app'); m.close(); };
+        el.querySelector('[data-gmail]').onclick = () => { const v = check(); if (!v) return; window.open('https://mail.google.com/mail/?view=cm&fs=1&to=' + encodeURIComponent(v.to) + '&su=' + encodeURIComponent(v.subj) + '&body=' + encodeURIComponent(v.body), '_blank', 'noopener'); done('gmail'); m.close(); };
+        el.querySelector('[data-copy]').onclick = async () => { const v = f(); try { await navigator.clipboard.writeText(v.body); } catch (e) { const t = el.querySelector('[data-body]'); t.select(); document.execCommand('copy'); } toast('Message copied', 'info'); };
+        el.querySelector('[data-pdf]').onclick = () => { m.close(); setTimeout(() => Invoices.printInvoice(inv), 250); };
+      }
+    });
+  },
   pay(inv) {
     const bal = DB.invBalance(inv);
     formModal({
@@ -3156,7 +3251,7 @@ const Invoices = {
         { key: 'total', label: 'Total', cls: 'num', get: (i) => DB.invTotal(i).total, render: (i) => money(DB.invTotal(i).total) },
         { key: 'paid', label: 'Paid', cls: 'num', get: (i) => DB.invPaid(i), render: (i) => money(DB.invPaid(i)) },
         { key: 'status', label: 'Status', get: (i) => DB.invStatus(i), render: (i) => badge(DB.invStatus(i), statusTone(DB.invStatus(i))) },
-        { key: 'a', label: '', sort: false, cls: 'act', render: (i) => html`<div class="row-acts">${Auth.can('invoices', 'edit') && DB.invBalance(i) > 0 && DB.invStatus(i) !== 'Cancelled' ? btn('', 'inv:pay', { id: i.id, icon: 'invoices', cls: 'icon-btn sm', title: 'Record payment' }) : ''}${btn('', 'inv:print', { id: i.id, icon: 'print', cls: 'icon-btn sm', title: 'Print' })}</div>` }
+        { key: 'a', label: '', sort: false, cls: 'act', render: (i) => html`<div class="row-acts">${Auth.can('invoices', 'edit') && DB.invBalance(i) > 0 && DB.invStatus(i) !== 'Cancelled' ? btn('', 'inv:pay', { id: i.id, icon: 'invoices', cls: 'icon-btn sm', title: 'Record payment' }) : ''}${btn('', 'inv:email', { id: i.id, icon: 'mail', cls: 'icon-btn sm', title: 'Email invoice' })}${btn('', 'inv:print', { id: i.id, icon: 'print', cls: 'icon-btn sm', title: 'Print' })}</div>` }
       ]
     });
   },
@@ -3292,7 +3387,7 @@ Views.invoices = {
     const canEdit = Auth.can('invoices', 'edit');
     return html`<div class="crumbs"><a href="#/invoices">Invoices</a> › ${inv.number}</div>
       <div class="card"><div class="row-between wrap"><div><h1>${inv.number} ${badge(st, statusTone(st))}</h1><p class="muted"><a href="#/clients/${c.code}">${c.code} · ${c.name}</a> · issued ${fmtDate(inv.date)} · due ${fmtDate(inv.due)}</p></div>
-      <div class="row-acts">${canEdit && DB.invBalance(inv) > 0 && st !== 'Cancelled' ? btn('Record payment', 'inv:pay', { id: inv.id, cls: 'primary', icon: 'invoices' }) : ''}${canEdit && inv.status === 'Draft' ? btn('Mark as sent', 'inv:sent', { id: inv.id, cls: 'ghost' }) : ''}${btn('Print / PDF', 'inv:print', { id: inv.id, icon: 'print', cls: 'ghost' })}${btn('Reminder', 'inv:wa', { id: inv.id, icon: 'wa', cls: 'wa' })}${canEdit ? btn('Edit', 'inv:edit', { id: inv.id, icon: 'edit', cls: 'ghost' }) : ''}${Auth.can('invoices', 'delete') ? btn('', 'inv:del', { id: inv.id, icon: 'trash', cls: 'icon-btn danger-txt', title: 'Delete invoice' }) : ''}</div></div></div>
+      <div class="row-acts">${canEdit && DB.invBalance(inv) > 0 && st !== 'Cancelled' ? btn('Record payment', 'inv:pay', { id: inv.id, cls: 'primary', icon: 'invoices' }) : ''}${canEdit && inv.status === 'Draft' ? btn('Mark as sent', 'inv:sent', { id: inv.id, cls: 'ghost' }) : ''}${btn('Print / PDF', 'inv:print', { id: inv.id, icon: 'print', cls: 'ghost' })}${btn('Email', 'inv:email', { id: inv.id, icon: 'mail', cls: 'ghost' })}${btn('Reminder', 'inv:wa', { id: inv.id, icon: 'wa', cls: 'wa' })}${canEdit ? btn('Edit', 'inv:edit', { id: inv.id, icon: 'edit', cls: 'ghost' }) : ''}${Auth.can('invoices', 'delete') ? btn('', 'inv:del', { id: inv.id, icon: 'trash', cls: 'icon-btn danger-txt', title: 'Delete invoice' }) : ''}</div></div></div>
       <div class="grid-31"><div class="card"><table class="tbl"><thead><tr><th>#</th><th>Description</th><th class="num">Qty</th><th class="num">Rate</th><th class="num">Amount</th></tr></thead><tbody>${inv.items.map((it, i) => html`<tr><td>${i + 1}</td><td>${it.desc}</td><td class="num">${it.qty}</td><td class="num">${money(it.rate)}</td><td class="num">${money(it.qty * it.rate)}</td></tr>`)}</tbody></table>
         <div class="totals"><div>Subtotal <b>${money(t.sub)}</b></div><div>Discount <b>− ${money(t.disc)}</b></div><div>Tax (${inv.taxPct || 0}%) <b>${money(t.tax)}</b></div><div class="grand">Total <b>${money(t.total)}</b></div><div>Paid <b>${money(DB.invPaid(inv))}</b></div></div>${inv.notes ? html`<p class="muted">${inv.notes}</p>` : ''}</div>
       <div class="card"><h3>Payments</h3>${progress(t.total ? DB.invPaid(inv) / t.total * 100 : 0, 'green')}${pays.length ? html`<ul class="list">${pays.map((p) => html`<li class="row-between"><span><b>${money(p.amount)}</b> · ${Lists.name('paymentMethods', p.method)}<br><small class="muted">${p.number} · ${fmtDate(p.date)}${p.ref ? ' · ' + p.ref : ''}</small></span>${btn('', 'pay:receipt', { id: p.id, icon: 'print', cls: 'icon-btn sm', title: 'Receipt' })}</li>`)}</ul>` : html`<p class="muted">No payments yet.</p>`}</div></div>`;
@@ -3338,6 +3433,7 @@ act('inv:new', (a) => Invoices.open(null, a.dataset.client ? { clientId: a.datas
 act('inv:edit', (a) => Invoices.open(invOf(a)));
 act('inv:pay', (a) => Invoices.pay(invOf(a)));
 act('inv:print', (a) => Invoices.printInvoice(invOf(a)));
+act('inv:email', (a) => Invoices.email(invOf(a)));
 act('inv:sent', (a) => { const i = invOf(a); Store.commit(() => { i.status = 'Sent'; }); Auth.audit('edit', 'invoices', `${i.number} marked as sent`, { recordId: i.id, old: { status: 'Draft' }, new: { status: 'Sent' } }); toast('Marked as sent'); });
 act('inv:wa', (a) => { const i = invOf(a); const c = DB.client(i.clientId); const tpl = { title: `invoice ${i.number} (${money(DB.invTotal(i).total)})`, due: i.due }; Contact.compose('whatsapp', c, tpl); });
 act('inv:del', async (a) => {
