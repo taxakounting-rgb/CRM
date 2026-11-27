@@ -44,7 +44,7 @@ const Theme = {
   },
   makeCustom(c, id = 'custom', name = 'My custom theme', desc = 'Your own colours') {
     const dark = this.onColor(c.side) === '#ffffff';
-    return { id, name, desc, brand: c.brand, brandD: shadeHex(c.brand, -0.18), brandDk: shadeHex(c.brand, 0.25), side: c.side, lightSide: !dark, hero: dark ? c.side : shadeHex(c.brand, -0.55), sideDk: dark ? shadeHex(c.side, -0.45) : shadeHex(c.brand, -0.72), bg: dark ? '#f4f5f7' : shadeHex(c.side, -0.02) };
+    return { id, name, desc, brand: c.brand, brandD: shadeHex(c.brand, -0.18), brandDk: shadeHex(c.brand, 0.25), side: c.side, lightSide: !dark, hero: dark ? c.side : shadeHex(c.brand, -0.55), sideDk: dark ? shadeHex(c.side, -0.45) : shadeHex(c.brand, -0.72), bg: /^#[0-9a-f]{6}$/i.test(c.bg || '') ? c.bg : (dark ? '#f4f5f7' : shadeHex(c.side, -0.02)) };
   },
   /* Theme list: built-in themes + the company brand colours (Settings) + the user's own custom colours */
   list() {
@@ -112,11 +112,11 @@ const ThemeUI = {
   gallery(withDefault) {
     const cur = Theme.skinId(); const def = (Store.s.settings && Store.s.settings.defaultSkin) || 'ocean'; const list = Theme.list();
     const group = (title, arr) => arr.length ? html`<h4 class="th-group">${title} <span class="cnt">${arr.length}</span></h4><div class="theme-grid">${arr.map((t) => this.card(t, t.id === cur))}</div>` : '';
-    const cc = Theme.customColors() || { brand: '#0e7c86', side: '#10242b' };
+    const cc0 = Theme.customColors() || { brand: '#0e7c86', side: '#10242b' }; const cc = Object.assign({}, cc0, { bg: Theme.makeCustom(cc0).bg });
     return html`<div class="theme-bar">${this.modeSeg()}${withDefault && Auth.can('settings', 'edit') ? html`<span class="row-acts"><span class="muted sm">Company default: <b>${(list.find((t) => t.id === def) || {}).name}</b></span>${cur !== def ? btn('Make current theme the company default', 'theme:default', { cls: 'sm ghost' }) : ''}</span>` : ''}</div>
       ${group('Dark sidebar', list.filter((t) => !t.lightSide && t.id !== 'custom' && t.id !== 'brand'))}${group('Light sidebar', list.filter((t) => t.lightSide && t.id !== 'custom' && t.id !== 'brand'))}${group('Your colours', list.filter((t) => t.id === 'custom' || t.id === 'brand'))}
-      <div class="card th-custom"><h4>Build your own theme</h4><p class="muted sm">Pick a brand colour and a sidebar colour. The text colour is chosen automatically for readability.</p>
-      <div class="row-acts" style="justify-content:flex-start;gap:14px;flex-wrap:wrap"><label class="th-pick"><span>Brand colour</span><input type="color" data-cust="brand" value="${cc.brand}"></label><label class="th-pick"><span>Sidebar colour</span><input type="color" data-cust="side" value="${cc.side}"></label>${btn('Use my colours', 'theme:custom', { cls: 'primary sm' })}</div></div>
+      <div class="card th-custom"><h4>Build your own theme</h4><p class="muted sm">Pick 3 colours, like the built-in themes: sidebar, brand (buttons, links, charts) and page background. Text colour is chosen automatically for readability.</p>
+      <div class="th-custom-row"><div class="th-card th-live" data-cust-prev>${this.cardInner(Theme.makeCustom(cc, 'custom', 'Preview', 'Updates as you pick colours'))}</div><div class="row-acts" style="justify-content:flex-start;gap:14px;flex-wrap:wrap;align-content:flex-start"><label class="th-pick"><span>1. Sidebar colour</span><input type="color" data-cust="side" value="${cc.side}"></label><label class="th-pick"><span>2. Brand colour</span><input type="color" data-cust="brand" value="${cc.brand}"></label><label class="th-pick"><span>3. Page background</span><input type="color" data-cust="bg" value="${cc.bg}"></label>${btn('Use my colours', 'theme:custom', { cls: 'primary sm' })}</div></div></div>
       <p class="help mt">Your theme is saved to your user account, so each team member can choose their own. The company default is used on the sign-in screen and for users who have not picked one.</p>`;
   },
   open() {
@@ -127,5 +127,9 @@ const ThemeUI = {
 act('theme:open', () => ThemeUI.open());
 act('theme:skin', (a) => { Theme.setSkin(a.dataset.id); ThemeUI.redraw(); });
 act('theme:mode', (a) => { Theme.setMode(a.dataset.id); ThemeUI.redraw(); });
-act('theme:custom', (a) => { const root = a.closest('.th-custom'); const c = { brand: root.querySelector('[data-cust=brand]').value, side: root.querySelector('[data-cust=side]').value }; try { localStorage.setItem('crm_custom', JSON.stringify(c)); } catch (e) { /* ignore */ } Theme.save({ skin: 'custom', custom: c }); ThemeUI.redraw(); toast('Custom theme applied'); });
+act('theme:custom', (a) => { const root = a.closest('.th-custom'); const c = { brand: root.querySelector('[data-cust=brand]').value, side: root.querySelector('[data-cust=side]').value, bg: root.querySelector('[data-cust=bg]').value }; try { localStorage.setItem('crm_custom', JSON.stringify(c)); } catch (e) { /* ignore */ } Theme.save({ skin: 'custom', custom: c }); ThemeUI.redraw(); toast('Custom theme applied'); });
 act('theme:default', () => { const id = Theme.skinId(); Store.commit((s) => { s.settings.defaultSkin = id; if (id === 'custom') s.settings.customTheme = Theme.customColors(); }); Auth.audit('edit', 'settings', `Company default theme set to ${(Theme.list().find((t) => t.id === id) || {}).name}`); toast('Company default theme updated'); ThemeUI.redraw(); });
+document.addEventListener('input', (e) => {
+  const i = e.target.closest && e.target.closest('[data-cust]'); if (!i) return; const root = i.closest('.th-custom'); const v = (k) => root.querySelector(`[data-cust=${k}]`).value;
+  const pv = root.querySelector('[data-cust-prev]'); if (pv) pv.innerHTML = String(ThemeUI.cardInner(Theme.makeCustom({ brand: v('brand'), side: v('side'), bg: v('bg') }, 'custom', 'Preview', 'Updates as you pick colours')));
+});

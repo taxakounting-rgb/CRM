@@ -417,3 +417,5 @@ input[type=color]{height:38px;min-width:56px;padding:3px;cursor:pointer}
 .acc-card.add{align-items:center;justify-content:center;flex-direction:row;gap:8px;border-style:dashed;color:var(--brand);font-weight:600;box-shadow:none}
 .acc-note{display:flex;align-items:center;gap:12px;justify-content:space-between;margin-bottom:12px;padding:10px 16px}
 .pos-txt{color:var(--green,#1baf7a);font-weight:600}
+
+.th-custom-row{display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap}.th-live{width:220px;pointer-events:none;cursor:default}
