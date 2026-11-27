@@ -31,16 +31,21 @@ const Seed = {
     const all = 'vcedx';
     return [
       { id: 'role_super', name: 'Super Admin', system: true, all: true, scope: 'all', perms: {} },
-      { id: 'role_admin', name: 'Admin', system: true, scope: 'all', perms: this.perms({ dashboard: 'v', clients: all, vault: all, team: all, tasks: all, services: all, compliance: all, invoices: all, documents: all, reports: 'vx', settings: 'vex', users: 'vce', audit: 'vx' }) },
-      { id: 'role_staff', name: 'Staff (own clients)', system: true, scope: 'assigned', perms: this.perms({ dashboard: 'v', clients: 'vce', vault: 'vce', team: 'v', tasks: 'vce', services: 'vce', compliance: 'v', documents: 'vce', reports: 'vx' }) },
-      { id: 'role_acc', name: 'Accounts', system: true, scope: 'all', perms: this.perms({ dashboard: 'v', clients: 'v', tasks: 'v', services: 'v', invoices: 'vcedx', documents: 'vc', reports: 'vx' }) },
-      { id: 'role_view', name: 'Viewer', system: true, scope: 'all', perms: this.perms({ dashboard: 'v', clients: 'v', team: 'v', tasks: 'v', services: 'v', compliance: 'v', documents: 'v', reports: 'v' }) }
+      { id: 'role_admin', name: 'Admin', system: true, scope: 'all', perms: this.perms({ dashboard: 'v', clients: all, vault: all, team: all, tasks: all, services: all, compliance: all, invoices: all, projects: all, documents: all, reports: 'vx', settings: 'vex', users: 'vce', audit: 'vx' }) },
+      { id: 'role_staff', name: 'Staff (own clients)', system: true, scope: 'assigned', perms: this.perms({ dashboard: 'v', clients: 'vce', vault: 'vce', team: 'v', tasks: 'vce', services: 'vce', compliance: 'v', projects: 'vce', documents: 'vce', reports: 'vx' }) },
+      { id: 'role_acc', name: 'Accounts', system: true, scope: 'all', perms: this.perms({ dashboard: 'v', clients: 'v', tasks: 'v', services: 'v', invoices: 'vcedx', projects: 'v', documents: 'vc', reports: 'vx' }) },
+      { id: 'role_view', name: 'Viewer', system: true, scope: 'all', perms: this.perms({ dashboard: 'v', clients: 'v', team: 'v', tasks: 'v', services: 'v', compliance: 'v', projects: 'v', documents: 'v', reports: 'v' }) }
     ];
   },
   settings() {
     return {
-      defaultSkin: 'ocean', prefixes: { task: 'TSK-', emp: 'EMP-', inv: 'INV-', doc: 'DOC-', rcpt: 'RCPT-', exp: 'EXP-' },
-      company: { name: '', phone: '', email: '', website: '', address: '', ntn: '', industry: '', country: '', invoiceFooter: 'Thank you for your business.', terms: 'Payment is due by the due date shown on this invoice.', bank: '' },
+      defaultSkin: 'ocean', prefixes: { task: 'TSK-', emp: 'EMP-', inv: 'INV-', doc: 'DOC-', rcpt: 'RCPT-', exp: 'EXP-', prj: 'PRJ-' },
+      company: { name: '', phone: '', email: '', website: '', address: '', ntn: '', industry: '', country: '', invoiceFooter: 'Thank you for your business.', terms: '', bank: '' },
+      tcTemplates: [
+        { id: 'tc_std', name: 'Standard', isDefault: true, text: '1. Payment is due by the due date shown on this invoice.\n2. Late payments may incur a 2% monthly surcharge.\n3. All prices are exclusive of applicable taxes unless stated.\n4. This invoice is subject to our standard terms of service.' },
+        { id: 'tc_consult', name: 'Consulting / Retainer', isDefault: false, text: '1. Fees are due within 15 days of invoice date.\n2. Retainer fees are non-refundable once work has commenced.\n3. Additional work beyond agreed scope will be billed separately.\n4. Disputes must be raised within 7 days of invoice date.' },
+        { id: 'tc_tax', name: 'Tax & Accounting', isDefault: false, text: '1. Payment is due within 30 days of invoice date.\n2. Documents required from the client must be provided in time. Delays caused by late submission will not be the responsibility of the firm.\n3. The firm shall not be liable for penalties arising from inaccurate information provided by the client.\n4. Confidentiality of all client information is maintained.' }
+      ],
       currency: { code: 'USD', symbol: '$' },
       inactivityMin: 15, capacity: 15, filingDueDay: 18, defaultTaxPct: 0, invoiceDueDays: 15, maxUploadMB: 10,
       allowRegistration: false, requireApproval: true, registrationRole: 'role_view', browserNotify: false,
@@ -68,6 +73,10 @@ const Seed = {
     s.settings.prefixes = Object.assign({}, this.settings().prefixes, s.settings.prefixes || {});
     if (!s.settings.currency) s.settings.currency = { code: 'USD', symbol: '$' };
     if (!s.settings.setupDone) s.settings.setupDone = true;
+    // Projects: ensure array exists for existing installs
+    if (!s.projects) s.projects = [];
+    // TC Templates: seed defaults for existing installs if none exist
+    if (!s.settings.tcTemplates || !s.settings.tcTemplates.length) s.settings.tcTemplates = this.settings().tcTemplates;
   }
 };
 

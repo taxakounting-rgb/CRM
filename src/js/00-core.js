@@ -104,10 +104,10 @@ const Store = {
   blank() {
     return {
       v: 1, savedAt: 0, createdAt: new Date().toISOString(),
-      counters: { client: {}, task: 0, emp: 0, inv: 0, doc: 0, pay: 0, exp: 0, rcpt: 0 },
+      counters: { client: {}, task: 0, emp: 0, inv: 0, doc: 0, pay: 0, exp: 0, rcpt: 0, prj: 0 },
       settings: {}, lists: {}, roles: [], users: [],
       clients: [], team: [], tasks: [], services: [], filings: {}, compliance: [],
-      invoices: [], payments: [], expenses: [], documents: [], creds: [], notes: [],
+      invoices: [], payments: [], expenses: [], projects: [], documents: [], creds: [], notes: [],
       timeline: [], followups: [], notifications: [], audit: [], savedFilters: [], reportTemplates: [], deleted: []
     };
   },
@@ -141,7 +141,7 @@ const Store = {
   },
   /* Next auto-number from counters with configurable prefix. */
   next(kind) {
-    const map = { task: ['task', 4], emp: ['emp', 3], inv: ['inv', 4], doc: ['doc', 4], pay: ['pay', 4], exp: ['exp', 4], rcpt: ['rcpt', 4] };
+    const map = { task: ['task', 4], emp: ['emp', 3], inv: ['inv', 4], doc: ['doc', 4], pay: ['pay', 4], exp: ['exp', 4], rcpt: ['rcpt', 4], prj: ['prj', 4] };
     const [k, w] = map[kind];
     this.s.counters[k] = (this.s.counters[k] || 0) + 1;
     const pre = (this.s.settings.prefixes || {})[k] ?? '';

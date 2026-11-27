@@ -110,7 +110,7 @@ Views.settings = {
   allow: () => Auth.can('settings') || Auth.can('users'),
   render(params) {
     const tabs = [];
-    if (Auth.can('settings')) tabs.push(['company', 'Company'], ['lists', 'Master Lists'], ['branches', 'Branches'], ['numbering', 'Numbering'], ['templates', 'Templates'], ['prefs', 'Preferences'], ['backup', 'Cloud & Data']);
+    if (Auth.can('settings')) tabs.push(['company', 'Company'], ['lists', 'Master Lists'], ['branches', 'Branches'], ['numbering', 'Numbering'], ['templates', 'Templates'], ['tc', 'T&C Templates'], ['prefs', 'Preferences'], ['backup', 'Cloud & Data']);
     if (Auth.can('users')) tabs.splice(2, 0, ['users', 'Users'], ['roles', 'Roles & Permissions']);
     const f = vs('settings'); const tab = params[0] && tabs.some((t) => t[0] === params[0]) ? params[0] : (f.tab && tabs.some((t) => t[0] === f.tab) ? f.tab : tabs[0][0]);
     if (params[0]) f.tab = tab;
@@ -188,6 +188,25 @@ Views.settings = {
     let ro = ro0 || !License.has('msg_templates'); const lockMsg = !License.has('msg_templates') ? License.lock('msg_templates') : '';
     return html`<div class="grid2"><div class="card"><div class="card-h"><h3>WhatsApp &amp; email templates</h3>${ro ? lockMsg : btn('Add', 'tpl:new', { cls: 'sm primary', icon: 'plus' })}</div><p class="muted sm">Placeholders: {client} {code} {task} {due} {officer} {company} {phone}</p><ul class="list">${msg.map((t, i) => html`<li class="row-between"><span>${badge(t.channel === 'whatsapp' ? 'WhatsApp' : 'Email', t.channel === 'whatsapp' ? 'green' : 'blue')} <b>${t.name}</b><br><small class="muted">${String(t.body).slice(0, 90)}…</small></span>${ro ? '' : html`<span class="row-acts">${btn('', 'tpl:edit', { id: i, icon: 'edit', cls: 'icon-btn sm', title: 'Edit' })}${btn('', 'tpl:del', { id: i, icon: 'trash', cls: 'icon-btn sm', title: 'Delete' })}</span>`}</li>`)}</ul></div>
       ${(ro = ro0 || !License.has('recurring'), '')}<div class="card"><div class="card-h"><h3>Task templates per service</h3>${ro ? (License.has('recurring') ? '' : License.lock('recurring')) : btn('Add', 'ttpl:new', { cls: 'sm primary', icon: 'plus' })}</div><p class="muted sm">When a task is created for a service, its checklist is added automatically.</p><ul class="list">${tpls.map((t, i) => html`<li class="row-between"><span><b>${Lists.name('services', t.service)}</b> — ${t.title}<br><small class="muted">${t.checklist.length} checklist items · ${t.days || 0} days to complete</small></span>${ro ? '' : html`<span class="row-acts">${btn('', 'ttpl:edit', { id: i, icon: 'edit', cls: 'icon-btn sm', title: 'Edit' })}${btn('', 'ttpl:del', { id: i, icon: 'trash', cls: 'icon-btn sm', title: 'Delete' })}</span>`}</li>`)}</ul></div></div>`;
+  },
+  t_tc() {
+    const ro = this.ro();
+    const tcs = Store.s.settings.tcTemplates || [];
+    return html`<div class="card">
+      <div class="card-h"><h3>Terms & Conditions Templates</h3>${ro ? '' : btn('Add Template', 'tc:new', { cls: 'sm primary', icon: 'plus' })}</div>
+      <p class="muted sm">Create multiple T&C templates and choose the right one when creating an invoice. Mark one as default to auto-select it.</p>
+      ${tcs.length ? html`<ul class="list">${tcs.map((t, i) => html`<li class="row-between">
+        <span>
+          <b>${t.name}</b>${t.isDefault ? html` ${badge('Default', 'green')}` : ''}
+          <br><small class="muted">${(t.text || '').slice(0, 80)}${(t.text || '').length > 80 ? '…' : ''}</small>
+        </span>
+        ${ro ? '' : html`<span class="row-acts">
+          ${!t.isDefault ? btn('Set Default', 'tc:default', { id: i, cls: 'sm ghost' }) : ''}
+          ${btn('', 'tc:edit', { id: i, icon: 'edit', cls: 'icon-btn sm', title: 'Edit' })}
+          ${btn('', 'tc:del', { id: i, icon: 'trash', cls: 'icon-btn sm', title: 'Delete' })}
+        </span>`}
+      </li>`)}` : html`<p class="muted">No templates yet. Add your first T&C template.</p>`}
+      </ul></div>`;
   },
   t_prefs() {
     const s = Store.s.settings; const ro = this.ro();
@@ -341,3 +360,44 @@ act('me:2fa', () => {
   } });
 });
 act('me:2faoff', async () => { const u = Auth.user; const p = await promptDlg('Turn off 2FA', 'Enter your password to confirm', { type: 'password', validate: async (v) => (await Auth.checkPassword(u, v)) ? '' : 'Incorrect password' }); if (p === null) return; Store.commit(() => { u.totp = null; }, { allowRO: true }); Auth.audit('2fa_disabled', 'users', `${u.username} disabled 2FA`, { recordId: u.id }); toast('2FA turned off'); });
+
+/* ---- T&C Template actions ---- */
+function tcForm(val, idx) {
+  formModal({
+    title: idx === undefined ? 'New T&C Template' : 'Edit T&C Template',
+    size: 'md', submit: idx === undefined ? 'Add Template' : 'Save',
+    fields: [
+      { name: 'name', label: 'Template Name (e.g. "Standard", "Consulting", "Retainer")', required: true, full: true },
+      { name: 'text', label: 'Terms & Conditions Text', type: 'textarea', full: true, rows: 8, required: true },
+      { name: 'isDefault', label: 'Set as default for new invoices', type: 'checkbox' }
+    ],
+    values: val || { name: '', text: '', isDefault: false },
+    onSubmit: (v) => {
+      Store.commit(s => {
+        const tcs = s.settings.tcTemplates = s.settings.tcTemplates || [];
+        if (v.isDefault) tcs.forEach(t => t.isDefault = false);
+        if (idx === undefined) { tcs.push({ id: uid('tc'), ...v }); }
+        else { Object.assign(tcs[idx], v); }
+      });
+      Auth.audit('edit', 'settings', `T&C template "${v.name}" ${idx === undefined ? 'created' : 'updated'}`);
+      toast('Saved');
+    }
+  });
+}
+act('tc:new', () => tcForm());
+act('tc:edit', (a) => { const tcs = Store.s.settings.tcTemplates || []; tcForm(clone(tcs[+a.dataset.id]), +a.dataset.id); });
+act('tc:del', async (a) => {
+  const tcs = Store.s.settings.tcTemplates || [];
+  const t = tcs[+a.dataset.id];
+  if (!(await confirmDlg(`Delete T&C template "${t.name}"?`, { danger: true, ok: 'Delete' }))) return;
+  Store.commit(s => { s.settings.tcTemplates.splice(+a.dataset.id, 1); });
+  Auth.audit('delete', 'settings', `T&C template "${t.name}" deleted`);
+  toast('Deleted');
+});
+act('tc:default', (a) => {
+  Store.commit(s => {
+    const tcs = s.settings.tcTemplates || [];
+    tcs.forEach((t, i) => t.isDefault = i === +a.dataset.id);
+  });
+  toast('Default updated');
+});

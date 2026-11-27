@@ -11,7 +11,7 @@ const Router = {
     const items = [
       ['dashboard', 'Dashboard', 'dashboard', '#/dashboard'], ['clients', 'Clients', 'clients', '#/clients'], ['tasks', 'Tasks', 'tasks', '#/tasks'],
       ['services', 'Services', 'services', '#/services'], ['compliance', 'Deadlines', 'compliance', '#/compliance'],
-      ['vault', 'Credential Vault', 'vault', '#/vault'], ['invoices', 'Invoices & Payments', 'invoices', '#/invoices'], ['documents', 'Documents', 'documents', '#/documents'],
+      ['vault', 'Credential Vault', 'vault', '#/vault'], ['projects', 'Projects', 'projects', '#/projects'], ['invoices', 'Invoices & Payments', 'invoices', '#/invoices'], ['documents', 'Documents', 'documents', '#/documents'],
       ['team', 'Team', 'team', '#/team'], ['reports', 'Reports', 'reports', '#/reports'], ['audit', 'Audit Log', 'audit', '#/audit'], ['settings', 'Settings', 'settings', '#/settings']
     ];
     return items.filter(([m]) => m === 'settings' ? (Auth.can('settings') || Auth.can('users')) : Auth.can(m)).map(([mod, label, ic, href]) => ({ mod, label, ic, href }));

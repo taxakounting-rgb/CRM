@@ -6,7 +6,8 @@
 const Invoices = {
   open(inv, preset = {}) {
     const isNew = !inv;
-    const v = inv ? clone(inv) : Object.assign({ date: today(), due: addDays(today(), Number(Store.s.settings.invoiceDueDays) || 15), items: [{ desc: '', service: '', qty: 1, rate: 0 }], discount: 0, taxPct: Number(Store.s.settings.defaultTaxPct) || 0, notes: '', status: 'Draft' }, preset);
+    const defaultTc = ((Store.s.settings.tcTemplates || []).find(t => t.isDefault) || {}).id || '';
+    const v = inv ? clone(inv) : Object.assign({ date: today(), due: addDays(today(), Number(Store.s.settings.invoiceDueDays) || 15), items: [{ desc: '', service: '', qty: 1, rate: 0 }], discount: 0, taxPct: Number(Store.s.settings.defaultTaxPct) || 0, notes: '', status: 'Draft', tcTemplateId: defaultTc }, preset);
     const svcFee = (id) => { const s = Lists.get('services', id); return s && s.fee ? Number(s.fee) : 0; };
     const row = (it, i) => html`<tr data-i="${i}"><td><select class="inp sm" data-k="service" aria-label="Service"><option value="">— Service —</option>${Lists.options('services', it.service)}</select><input class="inp sm" data-k="desc" value="${it.desc}" placeholder="Description" aria-label="Description"></td><td><input class="inp sm num" type="number" min="0" step="any" data-k="qty" value="${it.qty}" aria-label="Quantity"></td><td><input class="inp sm num" type="number" min="0" step="any" data-k="rate" value="${it.rate}" aria-label="Rate"></td><td class="num" data-amt>${money(it.qty * it.rate)}</td><td><button type="button" class="icon-btn sm" data-rm aria-label="Remove line">${icon('close')}</button></td></tr>`;
     Modal.open({
@@ -20,6 +21,10 @@ const Invoices = {
         ${fieldHTML({ name: 'discount', label: `Discount (${curCode()})`, type: 'money', min: 0 }, v.discount)}
         ${fieldHTML({ name: 'taxPct', label: 'Tax %', type: 'number', min: 0, step: '0.01' }, v.taxPct)}
         ${fieldHTML({ name: 'notes', label: 'Notes on invoice', type: 'textarea', full: true, rows: 2 }, v.notes)}
+        <div class="full"><label class="fld"><span>Terms & Conditions</span><select name="tcTemplateId" data-tc>
+          <option value="">— None —</option>
+          ${(Store.s.settings.tcTemplates || []).map(t => html`<option value="${t.id}" ${t.id === v.tcTemplateId ? raw('selected') : ''}>${t.name}${t.isDefault ? ' (Default)' : ''}</option>`)}
+        </select></label><div class="tc-preview muted sm" data-tc-preview>${(Store.s.settings.tcTemplates || []).find(t => t.id === v.tcTemplateId) ? html`<pre style="white-space:pre-wrap;font-size:0.8em;max-height:80px;overflow:auto">${(Store.s.settings.tcTemplates || []).find(t => t.id === v.tcTemplateId).text}</pre>` : ''}</div></div>
         <div class="full totals" data-totals></div><p class="err full" data-e></p></form>`,
       foot: html`<button type="button" class="btn ghost" data-close>Cancel</button><button type="button" class="btn primary" data-save>Save invoice</button>`,
       onMount: (el, m) => {
@@ -35,9 +40,16 @@ const Invoices = {
         tb.addEventListener('click', (e) => { if (e.target.closest('[data-rm]')) { if ($$('tr', tb).length > 1) e.target.closest('tr').remove(); recalc(); } });
         el.querySelector('[data-add]').onclick = () => { tb.insertAdjacentHTML('beforeend', String(row({ desc: '', service: '', qty: 1, rate: 0 }, $$('tr', tb).length))); };
         form.addEventListener('input', recalc); recalc(); bindFormExtras(form);
+        // TC preview
+        const tcSel = el.querySelector('[data-tc]'); const tcPrev = el.querySelector('[data-tc-preview]');
+        if (tcSel && tcPrev) tcSel.addEventListener('change', () => {
+          const tcs = Store.s.settings.tcTemplates || [];
+          const t = tcs.find(x => x.id === tcSel.value);
+          tcPrev.innerHTML = t ? `<pre style="white-space:pre-wrap;font-size:0.8em;max-height:80px;overflow:auto">${String(t.text).replace(/&/g,'&amp;').replace(/</g,'&lt;')}</pre>` : '';
+        });
         el.querySelector('[data-save]').onclick = () => {
           const items = read().filter((i) => i.desc || i.service || i.rate);
-          const vals = { clientId: form.clientId.value, date: form.date.value, due: form.due.value, status: form.status.value, discount: Number(form.discount.value) || 0, taxPct: Number(form.taxPct.value) || 0, notes: form.notes.value.trim(), items: items.map((i) => Object.assign(i, { desc: i.desc || Lists.name('services', i.service) })) };
+          const vals = { clientId: form.clientId.value, date: form.date.value, due: form.due.value, status: form.status.value, discount: Number(form.discount.value) || 0, taxPct: Number(form.taxPct.value) || 0, notes: form.notes.value.trim(), tcTemplateId: (el.querySelector('[data-tc]') || {}).value || '', items: items.map((i) => Object.assign(i, { desc: i.desc || Lists.name('services', i.service) })) };
           const err = !vals.clientId ? 'Choose a client.' : !items.length ? 'Add at least one line item.' : vals.due < vals.date ? 'Due date is before the invoice date.' : !Auth.canSeeClient(vals.clientId) ? 'Choose one of your clients.' : '';
           if (err) { el.querySelector('[data-e]').textContent = err; return; }
           const c = DB.client(vals.clientId);
@@ -114,11 +126,64 @@ const Invoices = {
   printInvoice(inv) {
     const c = DB.client(inv.clientId) || {}; const t = DB.invTotal(inv); const paid = DB.invPaid(inv); const co = Store.s.settings.company || {};
     const pays = Store.s.payments.filter((p) => p.invoiceId === inv.id);
-    printHTML(inv.number, html`<div class="invoice-print">${printHeader('INVOICE')}<div class="inv-meta"><div><small>BILL TO</small><b>${c.name || ''}</b>${[c.businessName, c.mobile, c.ntn ? 'Tax no: ' + c.ntn : '', c.cnic ? 'ID: ' + c.cnic : ''].filter(Boolean).map((x) => html`<br>${x}`)}</div><div class="right"><table class="meta-t"><tr><td>Invoice #</td><td><b>${inv.number}</b></td></tr><tr><td>Customer code</td><td>${c.code || ''}</td></tr><tr><td>Date</td><td>${fmtDate(inv.date)}</td></tr><tr><td>Due date</td><td>${fmtDate(inv.due)}</td></tr><tr><td>Status</td><td><b>${DB.invStatus(inv)}</b></td></tr></table></div></div>
-      <table class="ptbl"><thead><tr><th>#</th><th>Description</th><th class="num">Qty</th><th class="num">Rate</th><th class="num">Amount</th></tr></thead><tbody>${inv.items.map((it, i) => html`<tr><td>${i + 1}</td><td>${it.desc}</td><td class="num">${it.qty}</td><td class="num">${money(it.rate)}</td><td class="num">${money(it.qty * it.rate)}</td></tr>`)}</tbody></table>
-      <table class="ptot"><tr><td>Subtotal</td><td>${money(t.sub)}</td></tr>${t.disc ? html`<tr><td>Discount</td><td>− ${money(t.disc)}</td></tr>` : ''}${inv.taxPct ? html`<tr><td>Tax (${inv.taxPct}%)</td><td>${money(t.tax)}</td></tr>` : ''}<tr class="g"><td>Total</td><td>${money(t.total)}</td></tr><tr><td>Paid</td><td>${money(paid)}</td></tr><tr class="g"><td>Balance due</td><td>${money(Math.max(0, t.total - paid))}</td></tr></table>
-      ${pays.length ? html`<h4>Payments received</h4><table class="ptbl"><tr><th>Receipt</th><th>Date</th><th>Method</th><th>Ref</th><th class="num">Amount</th></tr>${pays.map((p) => html`<tr><td>${p.number}</td><td>${fmtDate(p.date)}</td><td>${Lists.name('paymentMethods', p.method)}</td><td>${p.ref || ''}</td><td class="num">${money(p.amount)}</td></tr>`)}</table>` : ''}
-      ${inv.notes ? html`<p><b>Notes:</b> ${inv.notes}</p>` : ''}${co.terms ? html`<div class="p-terms"><b>Terms &amp; conditions</b><br>${co.terms}</div>` : ''}${co.bank ? html`<div class="p-terms"><b>Bank details</b><br>${co.bank}</div>` : ''}<div class="p-foot">${co.invoiceFooter || ''}<br>${printFooter()}</div></div>`);
+    const tcs = Store.s.settings.tcTemplates || [];
+    const tcTpl = inv.tcTemplateId ? tcs.find(x => x.id === inv.tcTemplateId) : tcs.find(x => x.isDefault);
+    const tcText = tcTpl ? tcTpl.text : co.terms;
+    const balance = Math.max(0, t.total - paid);
+    const st = DB.invStatus(inv);
+    printHTML(inv.number, html`<div class="invoice-print">
+      ${printHeader('INVOICE')}
+      <div class="inv-meta">
+        <div class="inv-bill-to">
+          <div class="inv-label">BILL TO</div>
+          <div class="inv-client-name">${c.name || ''}</div>
+          ${c.businessName ? html`<div>${c.businessName}</div>` : ''}
+          ${c.address ? html`<div class="inv-addr">${c.address}</div>` : ''}
+          ${c.mobile ? html`<div>${c.mobile}</div>` : ''}
+          ${c.ntn ? html`<div>Tax No: ${c.ntn}</div>` : ''}
+          ${c.cnic ? html`<div>ID: ${c.cnic}</div>` : ''}
+        </div>
+        <div class="inv-details-box">
+          <table class="inv-detail-t">
+            <tr><td>Invoice No.</td><td><b>${inv.number}</b></td></tr>
+            <tr><td>Customer Code</td><td>${c.code || ''}</td></tr>
+            <tr><td>Invoice Date</td><td>${fmtDate(inv.date)}</td></tr>
+            <tr><td>Due Date</td><td><b>${fmtDate(inv.due)}</b></td></tr>
+            <tr><td>Status</td><td><b>${st}</b></td></tr>
+            ${balance > 0 ? html`<tr class="inv-balance-row"><td>Balance Due</td><td><b>${money(balance)}</b></td></tr>` : ''}
+          </table>
+        </div>
+      </div>
+
+      <table class="ptbl inv-items">
+        <thead><tr><th style="width:40px">#</th><th>Description</th><th class="num" style="width:70px">Qty</th><th class="num" style="width:100px">Rate</th><th class="num" style="width:110px">Amount</th></tr></thead>
+        <tbody>${inv.items.map((it, i) => html`<tr><td>${i + 1}</td><td>${it.desc}${it.service && Lists.name('services', it.service) !== it.desc ? html`<br><small style="color:#888">${Lists.name('services', it.service)}</small>` : ''}</td><td class="num">${it.qty}</td><td class="num">${money(it.rate)}</td><td class="num"><b>${money(it.qty * it.rate)}</b></td></tr>`)}</tbody>
+      </table>
+
+      <div class="inv-bottom">
+        ${inv.notes ? html`<div class="inv-notes-box"><b>Notes</b><br>${inv.notes}</div>` : html`<div></div>`}
+        <table class="ptot inv-totals">
+          <tr><td>Subtotal</td><td>${money(t.sub)}</td></tr>
+          ${t.disc ? html`<tr><td>Discount</td><td class="disc">− ${money(t.disc)}</td></tr>` : ''}
+          ${inv.taxPct ? html`<tr><td>Tax (${inv.taxPct}%)</td><td>${money(t.tax)}</td></tr>` : ''}
+          <tr class="g total-row"><td>TOTAL</td><td>${money(t.total)}</td></tr>
+          ${paid > 0 ? html`<tr><td>Paid</td><td>${money(paid)}</td></tr>` : ''}
+          ${balance > 0 ? html`<tr class="g balance-row"><td>BALANCE DUE</td><td>${money(balance)}</td></tr>` : ''}
+          ${balance === 0 ? html`<tr class="g paid-row"><td colspan="2" style="text-align:center;color:#16a34a">✓ PAID IN FULL</td></tr>` : ''}
+        </table>
+      </div>
+
+      ${pays.length ? html`<div class="inv-payments"><b>Payments Received</b><table class="ptbl"><tr><th>Receipt</th><th>Date</th><th>Method</th><th>Reference</th><th class="num">Amount</th></tr>${pays.map((p) => html`<tr><td>${p.number}</td><td>${fmtDate(p.date)}</td><td>${Lists.name('paymentMethods', p.method)}</td><td>${p.ref || '—'}</td><td class="num">${money(p.amount)}</td></tr>`)}</table></div>` : ''}
+
+      ${co.bank ? html`<div class="p-terms"><b>Bank / Payment Details</b><br><span style="white-space:pre-line">${co.bank}</span></div>` : ''}
+      ${tcText ? html`<div class="p-terms"><b>Terms &amp; Conditions${tcTpl && tcTpl.name ? ` — ${tcTpl.name}` : ''}</b><br><span style="white-space:pre-line">${tcText}</span></div>` : ''}
+
+      <div class="inv-sign-row">
+        <div class="inv-sign-box"><div class="inv-sign-line"></div><small>Authorised Signature</small></div>
+        <div class="inv-sign-box"><div class="inv-sign-line"></div><small>Client Acknowledgment</small></div>
+      </div>
+      <div class="p-foot">${co.invoiceFooter || ''}<br>${printFooter()}</div>
+    </div>`);
     Auth.audit('export', 'invoices', `Printed invoice ${inv.number}`, { recordId: inv.id });
   },
   statement(c) {

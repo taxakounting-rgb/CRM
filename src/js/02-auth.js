@@ -5,7 +5,7 @@
 const MODULES = [
   ['dashboard', 'Dashboard'], ['clients', 'Clients'], ['vault', 'Credential Vault'], ['team', 'Team'], ['tasks', 'Tasks'],
   ['services', 'Services'], ['compliance', 'Deadlines'], ['invoices', 'Invoices & Payments'],
-  ['documents', 'Documents'], ['reports', 'Reports'], ['settings', 'Settings'], ['users', 'Users & Roles'], ['audit', 'Audit Log']
+  ['projects', 'Projects'], ['documents', 'Documents'], ['reports', 'Reports'], ['settings', 'Settings'], ['users', 'Users & Roles'], ['audit', 'Audit Log']
 ];
 const ACTIONS = ['view', 'create', 'edit', 'delete', 'export'];
 const MOD_FEATURE = { vault: 'vault', audit: 'audit' };
