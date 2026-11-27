@@ -56,7 +56,7 @@ const Invoices = {
         <div class="full"><label class="fld"><span>Terms & Conditions</span><select name="tcTemplateId" data-tc>
           <option value="">— None —</option>
           ${(Store.s.settings.tcTemplates || []).map(t => html`<option value="${t.id}" ${t.id === v.tcTemplateId ? raw('selected') : ''}>${t.name}${t.isDefault ? ' (Default)' : ''}</option>`)}
-        </select></label><div class="tc-preview muted sm" data-tc-preview>${(Store.s.settings.tcTemplates || []).find(t => t.id === v.tcTemplateId) ? html`<pre style="white-space:pre-wrap;font-size:0.8em;max-height:80px;overflow:auto">${(Store.s.settings.tcTemplates || []).find(t => t.id === v.tcTemplateId).text}</pre>` : ''}</div></div>
+        </select></label><label class="fld full" style="margin-top:8px"><span>Terms text on this invoice <small class="muted">(you can edit it for this invoice only)</small></span><textarea name="tcText" data-tc-text rows="4" placeholder="No terms on this invoice">${v.tcText !== undefined ? v.tcText : (((Store.s.settings.tcTemplates || []).find(t => t.id === v.tcTemplateId) || {}).text || '')}</textarea></label></div>
         <div class="full totals" data-totals></div><p class="err full" data-e></p></form>`,
       foot: html`<button type="button" class="btn ghost" data-close>Cancel</button><button type="button" class="btn primary" data-save>Save invoice</button>`,
       onMount: (el, m) => {
@@ -73,16 +73,12 @@ const Invoices = {
         tb.addEventListener('click', (e) => { if (e.target.closest('[data-rm]')) { if ($$('tr', tb).length > 1) e.target.closest('tr').remove(); recalc(); } });
         el.querySelector('[data-add]').onclick = () => { tb.insertAdjacentHTML('beforeend', String(row({ desc: '', service: '', qty: 1, rate: 0 }, $$('tr', tb).length))); };
         form.addEventListener('input', recalc); recalc(); bindFormExtras(form);
-        // TC preview
-        const tcSel = el.querySelector('[data-tc]'); const tcPrev = el.querySelector('[data-tc-preview]');
-        if (tcSel && tcPrev) tcSel.addEventListener('change', () => {
-          const tcs = Store.s.settings.tcTemplates || [];
-          const t = tcs.find(x => x.id === tcSel.value);
-          tcPrev.innerHTML = t ? `<pre style="white-space:pre-wrap;font-size:0.8em;max-height:80px;overflow:auto">${String(t.text).replace(/&/g,'&amp;').replace(/</g,'&lt;')}</pre>` : '';
-        });
+        // Choosing a template fills the editable terms text
+        const tcSel = el.querySelector('[data-tc]'); const tcTxt = el.querySelector('[data-tc-text]');
+        if (tcSel && tcTxt) tcSel.addEventListener('change', () => { const t = (Store.s.settings.tcTemplates || []).find(x => x.id === tcSel.value); tcTxt.value = t ? t.text : ''; });
         el.querySelector('[data-save]').onclick = () => {
           const items = read().filter((i) => i.desc || i.service || i.rate);
-          const vals = { clientId: form.clientId.value, date: form.date.value, due: form.due.value, status: form.status.value, discount: Number(form.discount.value) || 0, taxPct: Number(form.taxPct.value) || 0, notes: form.notes.value.trim(), tcTemplateId: (el.querySelector('[data-tc]') || {}).value || '', items: items.map((i) => Object.assign(i, { desc: i.desc || Lists.name('services', i.service) })) };
+          const vals = { clientId: form.clientId.value, date: form.date.value, due: form.due.value, status: form.status.value, discount: Number(form.discount.value) || 0, taxPct: Number(form.taxPct.value) || 0, notes: form.notes.value.trim(), tcTemplateId: (el.querySelector('[data-tc]') || {}).value || '', tcText: (el.querySelector('[data-tc-text]') || {}).value.trim(), items: items.map((i) => Object.assign(i, { desc: i.desc || Lists.name('services', i.service) })) };
           const err = !vals.clientId ? 'Choose a client.' : !items.length ? 'Add at least one line item.' : vals.due < vals.date ? 'Due date is before the invoice date.' : !Auth.canSeeClient(vals.clientId) ? 'Choose one of your clients.' : '';
           if (err) { el.querySelector('[data-e]').textContent = err; return; }
           const c = DB.client(vals.clientId);
@@ -204,7 +200,8 @@ const Invoices = {
     const pays = Store.s.payments.filter((p) => p.invoiceId === inv.id);
     const tcs = Store.s.settings.tcTemplates || [];
     const tcTpl = inv.tcTemplateId ? tcs.find(x => x.id === inv.tcTemplateId) : tcs.find(x => x.isDefault);
-    const tcText = tcTpl ? tcTpl.text : co.terms;
+    const tcText = inv.tcText !== undefined ? inv.tcText : (tcTpl ? tcTpl.text : co.terms);
+    const tcEdited = inv.tcText !== undefined && (!tcTpl || inv.tcText !== String(tcTpl.text).trim());
     const balance = Math.max(0, t.total - paid);
     const st = DB.invStatus(inv);
     printHTML(inv.number, html`<div class="invoice-print">
@@ -250,7 +247,7 @@ const Invoices = {
       ${pays.length ? html`<div class="inv-payments"><b>Payments Received</b><table class="ptbl"><tr><th>Receipt</th><th>Date</th><th>Method</th><th>Reference</th><th class="num">Amount</th></tr>${pays.map((p) => html`<tr><td>${p.number}</td><td>${fmtDate(p.date)}</td><td>${Lists.name('paymentMethods', p.method)}</td><td>${p.ref || '—'}</td><td class="num">${money(p.amount)}</td></tr>`)}</table></div>` : ''}
 
       ${co.bank ? html`<div class="p-terms"><b>Bank / Payment Details</b><br><span style="white-space:pre-line">${co.bank}</span></div>` : ''}
-      ${tcText ? html`<div class="p-terms"><b>Terms &amp; Conditions${tcTpl && tcTpl.name ? ` — ${tcTpl.name}` : ''}</b><br><span style="white-space:pre-line">${tcText}</span></div>` : ''}
+      ${tcText ? html`<div class="p-terms"><b>Terms &amp; Conditions${tcTpl && tcTpl.name && !tcEdited ? ` — ${tcTpl.name}` : ''}</b><br><span style="white-space:pre-line">${tcText}</span></div>` : ''}
 
       <div class="p-foot">${co.invoiceFooter || ''}<br>${printFooter()}</div>
     </div>`);
