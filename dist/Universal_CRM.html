@@ -3160,7 +3160,6 @@ const Invoices = {
         ${fieldHTML({ name: 'date', label: 'Invoice date', type: 'date', required: true }, v.date)}
         ${fieldHTML({ name: 'payTerms', label: 'Payment terms', type: 'select', options: PAY_TERMS.map((t) => ({ value: t.id, label: t.name })), required: true }, v.payTerms || (inv ? 'custom' : ((PAY_TERMS.find((t) => t.days === (Number(Store.s.settings.invoiceDueDays) || 15)) || {}).id || 'custom')))}
         ${fieldHTML({ name: 'due', label: 'Due date', type: 'date', required: true, help: 'Pick the date for this invoice.' }, v.due)}
-        ${fieldHTML({ name: 'status', label: 'Status', type: 'select', options: [{ value: 'Draft', label: 'Draft' }, { value: 'Sent', label: 'Sent / Issued' }, { value: 'Cancelled', label: 'Cancelled' }], required: true }, v.status === 'Cancelled' || v.status === 'Draft' ? v.status : 'Sent')}
         <div class="full"><table class="tbl lines"><thead><tr><th>Item</th><th class="num">Qty</th><th class="num">Rate (${curCode()})</th><th class="num">Amount</th><th></th></tr></thead><tbody data-lines>${v.items.map(row)}</tbody></table><button type="button" class="btn sm ghost" data-add>${icon('plus')}<span>Add line</span></button></div>
         ${fieldHTML({ name: 'discount', label: `Discount (${curCode()})`, type: 'money', min: 0 }, v.discount)}
         ${fieldHTML({ name: 'taxPct', label: 'Tax %', type: 'number', min: 0, step: '0.01' }, v.taxPct)}
@@ -3193,7 +3192,7 @@ const Invoices = {
         if (tcSel && tcTxt) tcSel.addEventListener('change', () => { const t = (Store.s.settings.tcTemplates || []).find(x => x.id === tcSel.value); tcTxt.value = t ? t.text : ''; });
         el.querySelector('[data-save]').onclick = () => {
           const items = read().filter((i) => i.desc || i.service || i.rate);
-          const vals = { clientId: form.clientId.value, date: form.date.value, due: form.due.value, payTerms: form.payTerms.value, status: form.status.value, discount: Number(form.discount.value) || 0, taxPct: Number(form.taxPct.value) || 0, notes: form.notes.value.trim(), tcTemplateId: (el.querySelector('[data-tc]') || {}).value || '', tcText: (el.querySelector('[data-tc-text]') || {}).value.trim(), items: items.map((i) => Object.assign(i, { desc: i.desc || Lists.name('services', i.service) })) };
+          const vals = { clientId: form.clientId.value, date: form.date.value, due: form.due.value, payTerms: form.payTerms.value, status: inv ? inv.status : 'Sent', discount: Number(form.discount.value) || 0, taxPct: Number(form.taxPct.value) || 0, notes: form.notes.value.trim(), tcTemplateId: (el.querySelector('[data-tc]') || {}).value || '', tcText: (el.querySelector('[data-tc-text]') || {}).value.trim(), items: items.map((i) => Object.assign(i, { desc: i.desc || Lists.name('services', i.service) })) };
           const err = !vals.clientId ? 'Choose a client.' : !items.length ? 'Add at least one line item.' : vals.due < vals.date ? 'Due date is before the invoice date.' : !Auth.canSeeClient(vals.clientId) ? 'Choose one of your clients.' : '';
           if (err) { el.querySelector('[data-e]').textContent = err; return; }
           const c = DB.client(vals.clientId);
@@ -3337,7 +3336,6 @@ const Invoices = {
             <tr><td>Customer Code</td><td>${c.code || ''}</td></tr>
             <tr><td>Invoice Date</td><td>${fmtDate(inv.date)}</td></tr>
             <tr><td>Due Date</td><td><b>${dueLabel(inv)}</b></td></tr>
-            <tr><td>Status</td><td><b>${st}</b></td></tr>
           </table>
         </div>
       </div>
